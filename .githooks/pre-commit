@@ -1,0 +1,33 @@
+#!/bin/sh
+# Pre-commit hook: run gitleaks, prettier, eslint, and fast security tests
+# Install: git config core.hooksPath .githooks
+
+echo "--- pre-commit: gitleaks ---"
+gitleaks detect --no-git --verbose 2>/dev/null
+if [ $? -ne 0 ]; then
+  echo "FAILED: gitleaks detected secrets. Remove them and try again."
+  exit 1
+fi
+
+echo "--- pre-commit: prettier ---"
+npx prettier --check .
+if [ $? -ne 0 ]; then
+  echo "FAILED: prettier check failed. Run 'npm run format' to fix."
+  exit 1
+fi
+
+echo "--- pre-commit: eslint ---"
+npx eslint .
+if [ $? -ne 0 ]; then
+  echo "FAILED: eslint found issues. Fix them before committing."
+  exit 1
+fi
+
+echo "--- pre-commit: fast security tests ---"
+npx tsx --test test/security/path-escape.test.ts test/security/sql-injection.test.ts
+if [ $? -ne 0 ]; then
+  echo "FAILED: security tests did not pass."
+  exit 1
+fi
+
+echo "--- pre-commit: passed ---"

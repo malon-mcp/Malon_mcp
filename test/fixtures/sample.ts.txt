@@ -1,0 +1,28 @@
+export interface User {
+  name: string;
+  age: number;
+}
+
+export function greet(user: User): string {
+  return `Hello, ${user.name}!`;
+}
+
+export class Greeter {
+  private prefix: string;
+
+  constructor(prefix: string) {
+    this.prefix = prefix;
+  }
+
+  greet(name: string): string {
+    return `${this.prefix}, ${name}!`;
+  }
+}
+
+export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
+
+const PI = 3.14159;
+
+function internalHelper(): void {
+  // noop
+}

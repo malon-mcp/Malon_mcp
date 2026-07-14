@@ -1,0 +1,46 @@
+# Malon — example configuration
+# Copy this to .malon/config.yml after running `malon init`
+
+pricing:
+  last_verified: 2026-07-14
+  providers:
+    anthropic:
+      claude-haiku-4-5:
+        input_per_million: 1.00
+        output_per_million: 5.00
+    openai:
+      gpt-4o-mini:
+        input_per_million: 0.15
+        output_per_million: 0.60
+    ollama:
+      llama3.1-8b:
+        input_per_million: 0
+        output_per_million: 0
+
+search:
+  provider: anthropic
+  model: claude-haiku-4-5
+  subagent_timeout_ms: 8000
+  max_rounds: 4
+  max_output_bytes: 32768
+
+index:
+  ignore_patterns:
+    - node_modules
+    - dist
+    - .git
+    - .malon
+  max_memory_mb: 512
+
+cost:
+  ceiling_usd: 0
+  shadow:
+    tokens_per_file_read: 4000
+    avg_tokens_per_file: 350
+
+log:
+  level: info
+  file: ""
+
+telemetry:
+  enabled: false

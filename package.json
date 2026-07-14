@@ -1,0 +1,47 @@
+{
+  "name": "malon",
+  "version": "0.0.1",
+  "description": "Local-first MCP server for search isolation, memory ledger, context rot detection, and cost governance",
+  "type": "module",
+  "main": "dist/server/index.js",
+  "bin": {
+    "malon": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "test": "tsx --test --test-reporter=spec \"test/**/*.test.ts\"",
+    "test:unit": "tsx --test \"test/unit/**/*.test.ts\"",
+    "test:integration": "tsx --test \"test/integration/**/*.test.ts\"",
+    "test:security": "tsx --test \"test/security/**/*.test.ts\"",
+    "coverage": "c8 --reporter=text --reporter=lcov npm test",
+    "start": "node dist/server/index.js",
+    "dev": "tsx watch src/server/index.ts",
+    "prepare": "node scripts/check-no-install-scripts.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "better-sqlite3": "^12.11.1",
+    "tree-sitter-javascript": "^0.23.1",
+    "tree-sitter-python": "^0.23.6",
+    "tree-sitter-typescript": "^0.23.2",
+    "web-tree-sitter": "^0.26.11",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "c8": "^10.1.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}

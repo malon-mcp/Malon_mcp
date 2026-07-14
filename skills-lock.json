@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "architecture": {
+      "source": "anthropics/knowledge-work-plugins",
+      "sourceType": "github",
+      "skillPath": "engineering/skills/architecture/SKILL.md",
+      "computedHash": "481afeee512fabfcd6efd78f4cc1c7024f443f8be376cf5c890a806b8511d73a"
+    },
+    "build-mcp-server": {
+      "source": "anthropics/claude-plugins-official",
+      "sourceType": "github",
+      "skillPath": "plugins/mcp-server-dev/skills/build-mcp-server/SKILL.md",
+      "computedHash": "9bf9f8ce713a3fc26f4bb3af09321626638b91f379bb3a15d5e809cc771e8a12"
+    },
+    "claude-api": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/claude-api/SKILL.md",
+      "computedHash": "d7848cf69221dc3edce871768ae8dc3914331b4f8af47dd88aa0eedeb29d12c7"
+    },
+    "claude-automation-recommender": {
+      "source": "anthropics/claude-plugins-official",
+      "sourceType": "github",
+      "skillPath": "plugins/claude-code-setup/skills/claude-automation-recommender/SKILL.md",
+      "computedHash": "bed758b9627ad21cdc8141e9b595b48ede2c785437253778e9857325818606db"
+    },
+    "code-review": {
+      "source": "anthropics/knowledge-work-plugins",
+      "sourceType": "github",
+      "skillPath": "engineering/skills/code-review/SKILL.md",
+      "computedHash": "2b1ac29c8d03ecdd6dbb9d0ebc8cdb05965151bedceed36f262546785b3123bc"
+    }
+  }
+}

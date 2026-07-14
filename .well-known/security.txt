@@ -1,0 +1,29 @@
+# Security contact for Malon MCP server
+# Reference: RFC 9116
+
+# Contact information
+Contact: mailto:security@yourdomain
+
+# Encryption for sensitive reports (optional)
+# Encryption: https://yourdomain/.well-known/pgp-key.txt
+
+# Preferred languages
+Preferred-Languages: en
+
+# Canonical URL for this file
+Canonical: https://github.com/malon/malon/.well-known/security.txt
+
+# Policy page (optional)
+# Policy: https://yourdomain/security-policy
+
+# Acknowledgments (optional)
+# Acknowledgments: https://yourdomain/hall-of-fame
+
+# Disclosure timeline
+# - Acknowledgment: within 24 hours
+# - Triage: within 72 hours
+# - Coordinated disclosure: default 90-day window
+# - CERT-In 6-hour clock applies for Indian operations (DPDPA 2023)
+
+# Expiry date (ISO 8601) — update after each review
+Expires: 2027-01-01T00:00:00.000Z

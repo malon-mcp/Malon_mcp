@@ -1,0 +1,51 @@
+# Node
+node_modules/
+*.tsbuildinfo
+dist/
+coverage/
+.nyc_output/
+
+# Malon — local-only, regenerable
+.malon/index.db*
+.malon/usage.log
+.malon/.malon.lock
+.malon/cache/
+.malon/*.tmp
+
+# Memory is git-tracked. The exception is intentional and narrow:
+!.malon/memory/
+!.malon/memory/**
+!.malon/config.yml
+
+# Project internal docs (tracked in notion, not git)
+Token.md
+Security_system_maintenance.md
+malon-threat-model.mmd
+malon-architecture.mmd
+Idea.md
+Plan.md
+
+# .agents/ — Anthropic skills (third-party, regenerable via npx skills add)
+.agents/
+
+# .opencode/ — opencode tool config + skills (machine-specific)
+.opencode/
+
+# .claude/ — local tool config (machine-specific)
+.claude/
+
+# skill-lock.json — tracked for reproducible installs
+# (not ignored, so it travels with the repo)
+
+# Env, secrets, keys
+.env
+.env.*
+*.key
+*.pem
+*.p12
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

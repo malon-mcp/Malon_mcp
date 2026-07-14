@@ -1,0 +1,7 @@
+export function helper(): string {
+  return 'hello from helper';
+}
+
+export function auth(username: string, password: string): boolean {
+  return username === 'admin' && password === 'secret';
+}
