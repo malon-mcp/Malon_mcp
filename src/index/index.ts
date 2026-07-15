@@ -166,6 +166,21 @@ export async function indexFile(absolutePath: string): Promise<void> {
   transaction();
 }
 
+export function removeFile(absolutePath: string): void {
+  if (!db || !db.open) throw new Error('Index not initialized');
+  const deleteSymbols = db.prepare('DELETE FROM symbols WHERE file_path = ?');
+  const deleteFts = db.prepare('DELETE FROM content_fts WHERE file_path = ?');
+  const deleteEdges = db.prepare('DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)');
+  const deleteFile = db.prepare('DELETE FROM files WHERE path = ?');
+  const transaction = db.transaction(() => {
+    deleteEdges.run(absolutePath);
+    deleteSymbols.run(absolutePath);
+    deleteFts.run(absolutePath);
+    deleteFile.run(absolutePath);
+  });
+  transaction();
+}
+
 export async function indexRepo(root: string): Promise<{ files_indexed: number; files_skipped: number }> {
   await initParser();
 

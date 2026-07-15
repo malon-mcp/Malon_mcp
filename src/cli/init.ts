@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from '../util/log.js';
 import { initIndex, indexRepo, closeDb, getDb } from '../index/index.js';
 import { incrementalIndex } from '../index/incremental.js';
@@ -12,6 +13,56 @@ const execFileP = promisify(execFile);
 const MINIMAL_ENV: NodeJS.ProcessEnv = {
   PATH: process.env['PATH'] ?? '',
 };
+
+async function gitRoot(repoRoot: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileP('git', ['rev-parse', '--git-dir'], {
+      cwd: repoRoot,
+      timeout: 5000,
+      maxBuffer: 1024 * 1024,
+      env: MINIMAL_ENV,
+    });
+    const gitDir = stdout.trim();
+    return path.resolve(repoRoot, gitDir);
+  } catch {
+    return null;
+  }
+}
+
+async function installGitHooks(repoRoot: string): Promise<void> {
+  const gitDir = await gitRoot(repoRoot);
+  if (!gitDir) {
+    logger.info({}, 'hook_no_git_repo');
+    return;
+  }
+
+  const hooksDir = path.join(gitDir, 'hooks');
+  const hookPath = path.join(hooksDir, 'post-commit');
+
+  try {
+    await fs.access(hookPath);
+    const existing = await fs.readFile(hookPath, 'utf8');
+    if (existing.includes('malon init --incremental')) {
+      logger.info({ path: hookPath }, 'hook_already_installed');
+      return;
+    }
+  } catch {
+    // File doesn't exist, will create
+  }
+
+  const cliPath = fileURLToPath(import.meta.resolve('../cli/index.js'));
+  const hookScript = `#!/bin/sh
+# Malon: auto-reindex on every commit
+exec node "${cliPath}" init --incremental
+`;
+
+  try {
+    await fs.writeFile(hookPath, hookScript, { mode: 0o755 });
+    logger.info({ path: hookPath }, 'hook_installed');
+  } catch (err) {
+    logger.warn({ err, path: hookPath }, 'hook_install_failed');
+  }
+}
 
 const DEFAULT_CONFIG = `# Malon configuration
 pricing:
@@ -70,6 +121,8 @@ export async function initCommand(repoRoot: string, options?: { incremental?: bo
     await fs.writeFile(configPath, DEFAULT_CONFIG, 'utf8');
     logger.info({ path: configPath }, 'config_created');
   }
+
+  await installGitHooks(repoRoot);
 
   initIndex(dbPath, repoRoot);
   recordUsage({

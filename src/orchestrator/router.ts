@@ -4,11 +4,12 @@ import type Database from 'better-sqlite3';
 import { MalonError, type SearchSpan, type StatusResult } from '../types.js';
 import { logger } from '../util/log.js';
 import { searchSubagent } from '../search/subagent.js';
-import { getMemory, writeMemory, getMemorySummary } from '../memory/ledger.js';
+import { getMemory, writeMemory, getMemorySummary, reindexMemoryFts5 } from '../memory/ledger.js';
 import { statusCommand, setStatusSessionId } from '../cli/status.js';
 import { checkRateLimit, recordTokensForRateLimit } from '../governor/rate-limiter.js';
 import { computeTokensSaved, recordUsage, getSessionStats } from '../governor/token-accounting.js';
 import { checkRot, recordFileRead, createCheckpoint } from '../governor/rot.js';
+import { createStableItem, createDynamicItem, orderContext } from './cache-ordering.js';
 
 let sessionId = crypto.randomUUID();
 
@@ -35,6 +36,7 @@ export function initRouter(root: string, database: Database.Database): void {
     memoryContext = s;
     logger.debug({ memoryLen: s.length }, 'memory_auto_injected');
   }).catch(() => {});
+  reindexMemoryFts5(root, database).catch(() => {});
 }
 
 const PRICING_TABLE: Record<string, Record<string, { inputPerMillion: number; outputPerMillion: number }>> = {
@@ -111,17 +113,39 @@ const HANDLERS: Record<string, ToolHandler> = {
     }
     const stats = getSessionStats();
     const rotFlag = checkRot(stats.tokens_used);
+    let checkpointPath: string | null = null;
     if (rotFlag) {
-      await createCheckpoint(getRepoRoot(), rotFlag, stats.tokens_used);
+      checkpointPath = await createCheckpoint(getRepoRoot(), rotFlag, stats.tokens_used);
     }
 
-    const envelope: Record<string, unknown> = { ...result, rot_flag: rotFlag };
+    const contextItems = [];
     if (!autoInjectSent && memoryContext && memoryContext !== 'No memory entries yet.') {
-      envelope['memory_summary'] = memoryContext;
+      contextItems.push(createStableItem('memory_summary', memoryContext, 0));
       autoInjectSent = true;
     }
+    contextItems.push(createDynamicItem('rot_flag', JSON.stringify(rotFlag), 0));
+    const spansContent = JSON.stringify(result.spans);
+    contextItems.push(createDynamicItem('spans', spansContent, 1));
+    contextItems.push(createStableItem('not_found', JSON.stringify(result.not_found), 10));
+    contextItems.push(createDynamicItem('metadata', JSON.stringify({
+      input_tokens: result.inputTokens,
+      output_tokens: result.outputTokens,
+      rounds_used: result.roundsUsed,
+      tokens_saved: tokensSaved,
+    }), 5));
+
+    const ordered = orderContext(contextItems);
+    const orderedEnvelope: Record<string, unknown> = {};
+    for (const item of ordered.items) {
+      orderedEnvelope[item.key] = item.content;
+    }
+    if (rotFlag) {
+      orderedEnvelope['rot_flag'] = rotFlag;
+      orderedEnvelope['message'] = `Context quality is dropping (${rotFlag}). Progress saved at ${checkpointPath ?? 'N/A'}. Recommend starting a fresh session.`;
+    }
+
     logger.debug({ tokensSaved, inputTokens: result.inputTokens, outputTokens: result.outputTokens, estimatedCost, rotFlag }, 'tokens_saved_computed');
-    return { content: [{ type: 'text', text: JSON.stringify(envelope) }] };
+    return { content: [{ type: 'text', text: JSON.stringify(orderedEnvelope) }] };
   },
 
   malon_memory_get: async (input) => {
@@ -139,6 +163,7 @@ const HANDLERS: Record<string, ToolHandler> = {
     }
     try {
       const writtenPath = await writeMemory(getRepoRoot(), category, heading, body);
+      reindexMemoryFts5(getRepoRoot(), getDb()).catch(() => {});
       return { content: [{ type: 'text', text: JSON.stringify({ written: true, path: writtenPath }) }] };
     } catch (err) {
       if (err instanceof MalonError) {

@@ -57,17 +57,17 @@ export async function createCheckpoint(repoRoot: string, cause: string, contextT
     .map(([f, c]) => `  ${f}: ${c} reads`)
     .join('\n');
 
-  const summary = [
-    'Context quality signal triggered: ' + cause,
-    '- Context tokens: ' + contextTokens + ' (ceiling: ' + state.ceilingTokens + ')',
-    fileReadEntries ? '- Frequently re-read files:\n' + fileReadEntries : '',
-    '',
-    'This checkpoint was created automatically by the Rot Governor.',
-    'Start a fresh session to reset context quality. Your progress is saved here.',
-  ].filter(Boolean).join('\n');
+  const timestamp = new Date().toISOString();
+  const summary = `## Session: Rot checkpoint (${cause})
+- **Context tokens**: ${contextTokens} (ceiling: ${state.ceilingTokens})
+- **Cause**: ${cause}
+- **Timestamp**: ${timestamp}
+- **Frequently re-read files**:
+${fileReadEntries || '  none'}
+- **Recommendation**: Context quality is dropping. Start a fresh session. Your progress is saved in this file.`;
 
   const { writeMemory } = await import('../memory/ledger.js');
-  const path = await writeMemory(repoRoot, 'session', 'Checkpoint: ' + cause + ' at ' + new Date().toISOString(), summary);
+  const path = await writeMemory(repoRoot, 'session', `Checkpoint: ${cause} at ${timestamp}`, summary);
   state.lastCheckpointMs = now;
   logger.info({ cause, path, contextTokens }, 'rot_checkpoint_created');
   return path;

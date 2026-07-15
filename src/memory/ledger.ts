@@ -1,5 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { statSync, readdirSync, readFileSync } from 'node:fs';
+import type Database from 'better-sqlite3';
 import { MalonError } from '../types.js';
 import { resolveInside } from '../util/paths.js';
 import { scanForSecrets } from './secret-scan.js';
@@ -111,4 +113,43 @@ export async function getMemorySummary(repoRoot: string): Promise<string> {
 
   if (summaries.length === 0) return 'No memory entries yet.';
   return 'Memory: ' + summaries.join(', ') + '.';
+}
+
+export async function reindexMemoryFts5(repoRoot: string, db: Database.Database): Promise<void> {
+  const memDir = memoryDir(repoRoot);
+  const deleteStmt = db.prepare('DELETE FROM content_fts WHERE file_path LIKE ?');
+  const insertStmt = db.prepare('INSERT INTO content_fts (file_path, body) VALUES (?, ?)');
+
+  const transaction = db.transaction(() => {
+    deleteStmt.run('.malon/memory/%');
+
+    for (const file of Object.values(CATEGORY_FILES)) {
+      const fp = file === 'sessions' ? path.join(memDir, 'sessions') : path.join(memDir, file);
+      try {
+        const resolved = path.resolve(fp);
+        const st = statSync(resolved);
+        if (st.isDirectory()) {
+          const files = readdirSync(resolved);
+          for (const f of files) {
+            const content = readFileSync(path.join(resolved, f), 'utf8');
+            const relPath = path.join('.malon', 'memory', file, f);
+            insertStmt.run(relPath.replace(/\\/g, '/'), content);
+          }
+        } else {
+          const content = readFileSync(resolved, 'utf8');
+          const relPath = path.join('.malon', 'memory', file).replace(/\\/g, '/');
+          insertStmt.run(relPath, content);
+        }
+      } catch {
+        // File doesn't exist yet
+      }
+    }
+  });
+
+  try {
+    transaction();
+    logger.debug({}, 'memory_fts5_reindexed');
+  } catch (err) {
+    logger.warn({ err }, 'memory_fts5_reindex_failed');
+  }
 }

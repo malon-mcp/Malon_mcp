@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { logger } from './log.js';
 import { setRateLimitConfig } from '../governor/rate-limiter.js';
+import { validatePricingAge } from '../governor/pricing.js';
+import type { PricingEntry } from '../governor/pricing.js';
 
 export interface RateLimitConfig {
   max_calls_per_session?: number;
@@ -9,15 +11,19 @@ export interface RateLimitConfig {
   window_ms?: number;
 }
 
-export interface ParsedConfig {
-  rate_limits?: RateLimitConfig;
+export interface NestedConfig {
+  rate_limits?: Record<string, unknown>;
+  pricing?: {
+    last_verified?: string;
+    providers?: Record<string, Record<string, PricingEntry>>;
+  };
 }
 
 export async function applyConfig(repoRoot: string): Promise<void> {
   const configPath = path.join(repoRoot, '.malon', 'config.yml');
   try {
     const content = await fs.readFile(configPath, 'utf8');
-    const config = parseFlatYaml(content);
+    const config = parseNestedYaml(content);
 
     const rateLimits = config['rate_limits'];
     if (rateLimits) {
@@ -31,38 +37,85 @@ export async function applyConfig(repoRoot: string): Promise<void> {
       setRateLimitConfig(opts);
       logger.debug({ limits: rateLimits }, 'rate_limits_configured_from_config');
     }
+
+    const pricing = config['pricing'];
+    if (pricing?.last_verified) {
+      validatePricingAge({
+        last_verified: pricing.last_verified,
+        providers: pricing.providers ?? {},
+      });
+    }
   } catch (err) {
+    if (err instanceof Error && err.name === 'ConfigError') {
+      throw err;
+    }
     logger.debug({ err }, 'config_not_found_using_defaults');
   }
 }
 
-function parseFlatYaml(content: string): ParsedConfig {
-  const result: Record<string, Record<string, unknown>> = {};
+function parseNestedYaml(content: string): NestedConfig {
+  const result: Record<string, unknown> = {};
   const lines = content.split('\n');
-  let section = '';
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    if (!trimmed.startsWith(' ') && !trimmed.startsWith('\t') && trimmed.endsWith(':')) {
-      section = trimmed.slice(0, -1);
-      result[section] = {};
-    } else if (section && trimmed.includes(':')) {
+
+  const stack: Array<{ indent: number; key: string; obj: Record<string, unknown> }> = [];
+
+  for (const rawLine of lines) {
+    if (rawLine.trim() === '' || rawLine.trimStart().startsWith('#')) continue;
+
+    const indent = rawLine.length - rawLine.trimStart().length;
+    const trimmed = rawLine.trim();
+
+    if (trimmed.endsWith(':')) {
+      const key = trimmed.slice(0, -1);
+      let parent = stack.length > 0 ? stack[stack.length - 1] ?? null : null;
+
+      while (parent && indent <= parent.indent) {
+        stack.pop();
+        parent = stack.length > 0 ? stack[stack.length - 1] ?? null : null;
+      }
+      const newParent = stack.length > 0 ? stack[stack.length - 1] ?? null : null;
+
+      const newObj: Record<string, unknown> = {};
+      if (newParent) {
+        newParent.obj[key] = newObj;
+      } else {
+        result[key] = newObj;
+      }
+      stack.push({ indent, key, obj: newObj });
+    } else if (trimmed.includes(':')) {
       const idx = trimmed.indexOf(':');
       const key = trimmed.slice(0, idx).trim();
       let val: string = trimmed.slice(idx + 1).trim();
-      if (val === '') continue;
-      if (/^\d+$/.test(val)) {
-        result[section]![key] = parseInt(val, 10);
-      } else if (/^\d+\.\d+$/.test(val)) {
-        result[section]![key] = parseFloat(val);
-      } else if (val === 'true') {
-        result[section]![key] = true;
-      } else if (val === 'false') {
-        result[section]![key] = false;
+
+      while (stack.length > 0) {
+        const lastItem = stack[stack.length - 1];
+        if (!lastItem || indent > lastItem.indent) break;
+        stack.pop();
+      }
+      const parent = stack.length > 0 ? stack[stack.length - 1] : null;
+
+      val = val.replace(/^'(.*)'$/, '$1').replace(/^"(.*)"$/, '$1');
+
+      const parsed: unknown =
+        val === ''
+          ? ''
+          : /^\d+$/.test(val)
+            ? parseInt(val, 10)
+            : /^\d+\.\d+$/.test(val)
+              ? parseFloat(val)
+              : val === 'true'
+                ? true
+                : val === 'false'
+                  ? false
+                  : val;
+
+      if (parent) {
+        parent.obj[key] = parsed;
       } else {
-        result[section]![key] = val;
+        result[key] = parsed;
       }
     }
   }
-  return result as unknown as ParsedConfig;
+
+  return result as unknown as NestedConfig;
 }
