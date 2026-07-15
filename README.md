@@ -25,14 +25,23 @@ in the codebase before reading files. Add this to your `CLAUDE.md` /
 `AGENTS.md`:
 
 ```
-For any question about where something is implemented, prefer the
-`malon_search` tool over native grep/read tools. The tool returns 1-3
-file:line spans with a one-line justification — enough to read the
-right slice instead of guessing.
+1. When you have a question about "where is X" or "how does Y work,"
+   prefer `malon_search` over your native grep/read loop. The tool
+   returns 1-3 file:line spans with a one-line justification — enough
+   to read the right slice instead of guessing.
 
-When you finish a non-trivial change, call `malon_memory_write` with
-the decision you made. Future sessions will see it via
-`malon_memory_get` and pick up where you left off.
+2. When you need cross-file context (callers, imports, related
+   symbols), call `malon_search` with the symbol name. The Subagent
+   walks the call graph; you don't have to.
+
+3. When you finish a non-trivial change, call `malon_memory_write`
+   with the decision you made. Future sessions will see it via
+   `malon_memory_get` and pick up where you left off.
+
+4. Don't try to bypass Malon with native tools for cross-file
+   questions. The whole point of Malon is to keep the expensive
+   primary model from burning tokens on search noise. If Malon's
+   search is missing something, tell us — don't work around it.
 ```
 
 ## Commands

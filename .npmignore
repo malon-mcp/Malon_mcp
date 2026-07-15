@@ -1,0 +1,49 @@
+# Source (compiled dist/ is what ships)
+src/
+
+# Tests and test fixtures
+test/
+
+# CI, hooks, configs
+.github/
+.githooks/
+.gitleaks.toml
+.pre-commit-config.yaml
+.semgrep.yml
+eslint.config.js
+tsconfig.json
+
+# Docs and internal planning
+docs/
+AGENTS.md
+Execution.md
+Idea.md
+Plan.md
+malon-architecture.mmd
+malon-threat-model.mmd
+Security_system_maintenance.md
+Token.md
+
+# User data templates
+.malon.example/
+.malon/
+
+# Third-party skills
+.agents/
+.claude/
+.opencode/
+
+# Security contact
+.well-known/
+
+# Scripts (not needed at runtime)
+scripts/
+
+# Skills lock
+skills-lock.json
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

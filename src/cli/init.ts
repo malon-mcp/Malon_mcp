@@ -43,6 +43,11 @@ cost:
     tokens_per_file_read: 4000
     avg_tokens_per_file: 350
 
+rate_limits:
+  max_calls_per_session: 100
+  max_tokens_per_session: 500000
+  window_ms: 60000
+
 log:
   level: info
   file: ''

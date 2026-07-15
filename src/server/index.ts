@@ -6,6 +6,7 @@ import { z } from 'zod/v4';
 import { logger } from '../util/log.js';
 import { route, initRouter } from '../orchestrator/router.js';
 import { initIndex, getDb } from '../index/index.js';
+import { applyConfig } from '../util/config.js';
 
 const server = new McpServer(
   {
@@ -83,6 +84,7 @@ async function main(): Promise<void> {
 
   const dbPath = path.join(malonDir, 'index.db');
   initIndex(dbPath);
+  await applyConfig(repoRoot);
   initRouter(repoRoot, getDb());
 
   logger.info({ version: '0.0.1', cwd: repoRoot }, 'malon_server_start');

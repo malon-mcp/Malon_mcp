@@ -8,11 +8,13 @@ const CEILING_RATIO = 0.4;
 interface RotState {
   fileReadCounts: Map<string, number>;
   ceilingTokens: number;
+  lastCheckpointMs: number;
 }
 
 const state: RotState = {
   fileReadCounts: new Map(),
   ceilingTokens: MIN_CEILING_TOKENS,
+  lastCheckpointMs: 0,
 };
 
 export function setCeiling(totalRepoTokens: number): void {
@@ -30,18 +32,45 @@ export function recordFileRead(filePath: string): number {
 
 export function checkRot(contextTokens: number): string | null {
   if (contextTokens > state.ceilingTokens) {
-    logger.warn({ contextTokens, ceiling: state.ceilingTokens }, 'rot_context_ceiling_exceeded');
     return 'context_size';
   }
 
   for (const [file, count] of state.fileReadCounts) {
     if (count >= SESSION_FILE_READ_CAP) {
-      logger.warn({ file, count }, 'rot_file_thrashing');
       return 'file_thrashing';
     }
   }
 
   return null;
+}
+
+export async function createCheckpoint(repoRoot: string, cause: string, contextTokens: number): Promise<string | null> {
+  const now = Date.now();
+  const cooldownMs = 60_000;
+  if (now - state.lastCheckpointMs < cooldownMs) {
+    logger.debug({ cause }, 'rot_checkpoint_skipped_cooldown');
+    return null;
+  }
+
+  const fileReadEntries = [...state.fileReadCounts.entries()]
+    .filter(([_, c]) => c >= 2)
+    .map(([f, c]) => `  ${f}: ${c} reads`)
+    .join('\n');
+
+  const summary = [
+    'Context quality signal triggered: ' + cause,
+    '- Context tokens: ' + contextTokens + ' (ceiling: ' + state.ceilingTokens + ')',
+    fileReadEntries ? '- Frequently re-read files:\n' + fileReadEntries : '',
+    '',
+    'This checkpoint was created automatically by the Rot Governor.',
+    'Start a fresh session to reset context quality. Your progress is saved here.',
+  ].filter(Boolean).join('\n');
+
+  const { writeMemory } = await import('../memory/ledger.js');
+  const path = await writeMemory(repoRoot, 'session', 'Checkpoint: ' + cause + ' at ' + new Date().toISOString(), summary);
+  state.lastCheckpointMs = now;
+  logger.info({ cause, path, contextTokens }, 'rot_checkpoint_created');
+  return path;
 }
 
 export function resetRotState(): void {
