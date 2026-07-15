@@ -11,7 +11,7 @@ test('no GPL or AGPL dependencies in the runtime tree — static check', async (
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
   const suspectDeps = new Map<string, string>();
 
-  for (const [name, _ver] of Object.entries(deps)) {
+  for (const [name] of Object.entries(deps)) {
     try {
       const depPkg = JSON.parse(
         await readFile(resolve(ROOT, 'node_modules', name, 'package.json'), 'utf8'),

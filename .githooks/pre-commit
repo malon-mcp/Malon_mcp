@@ -3,7 +3,15 @@
 # Install: git config core.hooksPath .githooks
 
 echo "--- pre-commit: gitleaks ---"
-gitleaks detect --no-git --verbose 2>/dev/null
+GITLEAKS="$(dirname "$0")/bin/gitleaks"
+if [ -x "$GITLEAKS" ]; then
+  "$GITLEAKS" detect --no-git --verbose 2>/dev/null
+elif command -v gitleaks >/dev/null 2>&1; then
+  gitleaks detect --no-git --verbose 2>/dev/null
+else
+  echo "WARNING: gitleaks not found; skipping secret scan"
+  echo "Install: https://github.com/gitleaks/gitleaks/releases"
+fi
 if [ $? -ne 0 ]; then
   echo "FAILED: gitleaks detected secrets. Remove them and try again."
   exit 1

@@ -3,6 +3,7 @@
 Each file is a single session checkpoint, named `<date>-<short-slug>.md`.
 Content is a structured summary of what was accomplished and what decisions were made.
 Format:
+
 ```
 ## Session: <short description>
 - **Tasks completed**: <one-line summary>
@@ -12,6 +13,7 @@ Format:
 ```
 
 Example:
+
 ```
 ## Session: JWT auth refactor
 - **Tasks completed**: Replaced hand-rolled JWT validation with middleware library

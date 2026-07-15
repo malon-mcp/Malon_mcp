@@ -13,10 +13,7 @@ export async function callOpenAi(opts: LlmCallOptions): Promise<LlmResponse> {
     signal: AbortSignal.timeout(opts.timeoutMs ?? 8_000),
     body: JSON.stringify({
       model: opts.model ?? 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: opts.systemPrompt },
-        ...opts.messages,
-      ],
+      messages: [{ role: 'system', content: opts.systemPrompt }, ...opts.messages],
       max_tokens: opts.maxTokens ?? 1024,
     }),
   });
@@ -27,7 +24,7 @@ export async function callOpenAi(opts: LlmCallOptions): Promise<LlmResponse> {
   }
 
   const data = (await response.json()) as {
-    choices: Array<{ message: { content: string } }>;
+    choices: { message: { content: string } }[];
     usage: { prompt_tokens: number; completion_tokens: number };
   };
 

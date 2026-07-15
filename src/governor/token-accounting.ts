@@ -19,7 +19,10 @@ let cumulativeTokensSaved = 0;
 
 export function recordUsage(rec: UsageRecord): void {
   records.push(rec);
-  logger.debug({ input: rec.input_tokens, output: rec.output_tokens, cost: rec.estimated_cost_usd }, 'usage_recorded');
+  logger.debug(
+    { input: rec.input_tokens, output: rec.output_tokens, cost: rec.estimated_cost_usd },
+    'usage_recorded',
+  );
 }
 
 export function getSessionStats(): {
@@ -32,10 +35,7 @@ export function getSessionStats(): {
   return { tokens_used, spend_usd, tokens_saved_cumulative: cumulativeTokensSaved };
 }
 
-export function computeTokensSaved(
-  actualInputTokens: number,
-  shadowInputTokens: number,
-): number {
+export function computeTokensSaved(actualInputTokens: number, shadowInputTokens: number): number {
   const saved = shadowInputTokens - actualInputTokens;
   cumulativeTokensSaved += saved;
   return saved;

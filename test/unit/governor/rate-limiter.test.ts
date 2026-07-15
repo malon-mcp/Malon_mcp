@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkRateLimit, recordTokensForRateLimit, resetRateLimitState, getRateLimitState, setRateLimitConfig } from '../../../dist/governor/rate-limiter.js';
+import {
+  checkRateLimit,
+  recordTokensForRateLimit,
+  resetRateLimitState,
+  getRateLimitState,
+  setRateLimitConfig,
+} from '../../../dist/governor/rate-limiter.js';
 import { MalonError } from '../../../dist/types.js';
 
 test('checkRateLimit allows calls under the limit', () => {
@@ -34,7 +40,8 @@ test('checkRateLimit throws when token limit exceeded', () => {
 
   assert.throws(
     () => checkRateLimit(300),
-    (err: unknown) => err instanceof MalonError && err.message.includes('Token rate limit exceeded'),
+    (err: unknown) =>
+      err instanceof MalonError && err.message.includes('Token rate limit exceeded'),
   );
 });
 

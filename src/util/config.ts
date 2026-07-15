@@ -11,12 +11,27 @@ export interface RateLimitConfig {
   window_ms?: number;
 }
 
+export interface SearchConfig {
+  provider?: string | undefined;
+  model?: string | undefined;
+  subagent_timeout_ms?: number | undefined;
+  max_rounds?: number | undefined;
+  max_output_bytes?: number | undefined;
+}
+
 export interface NestedConfig {
   rate_limits?: Record<string, unknown>;
+  search?: Record<string, unknown>;
   pricing?: {
     last_verified?: string;
     providers?: Record<string, Record<string, PricingEntry>>;
   };
+}
+
+let cachedSearchConfig: SearchConfig | null = null;
+
+export function getSearchConfig(): SearchConfig {
+  return cachedSearchConfig ?? {};
 }
 
 export async function applyConfig(repoRoot: string): Promise<void> {
@@ -27,7 +42,8 @@ export async function applyConfig(repoRoot: string): Promise<void> {
 
     const rateLimits = config['rate_limits'];
     if (rateLimits) {
-      const opts: { maxCallsPerSession?: number; windowMs?: number; maxTokensPerSession?: number } = {};
+      const opts: { maxCallsPerSession?: number; windowMs?: number; maxTokensPerSession?: number } =
+        {};
       const calls = rateLimits['max_calls_per_session'] as number | undefined;
       if (calls !== undefined) opts.maxCallsPerSession = calls;
       const window = rateLimits['window_ms'] as number | undefined;
@@ -36,6 +52,18 @@ export async function applyConfig(repoRoot: string): Promise<void> {
       if (tokens !== undefined) opts.maxTokensPerSession = tokens;
       setRateLimitConfig(opts);
       logger.debug({ limits: rateLimits }, 'rate_limits_configured_from_config');
+    }
+
+    const searchConfig = config['search'];
+    if (searchConfig) {
+      cachedSearchConfig = {
+        provider: searchConfig['provider'] as string | undefined,
+        model: searchConfig['model'] as string | undefined,
+        subagent_timeout_ms: searchConfig['subagent_timeout_ms'] as number | undefined,
+        max_rounds: searchConfig['max_rounds'] as number | undefined,
+        max_output_bytes: searchConfig['max_output_bytes'] as number | undefined,
+      };
+      logger.debug({ search: cachedSearchConfig }, 'search_config_loaded');
     }
 
     const pricing = config['pricing'];
@@ -57,7 +85,7 @@ function parseNestedYaml(content: string): NestedConfig {
   const result: Record<string, unknown> = {};
   const lines = content.split('\n');
 
-  const stack: Array<{ indent: number; key: string; obj: Record<string, unknown> }> = [];
+  const stack: { indent: number; key: string; obj: Record<string, unknown> }[] = [];
 
   for (const rawLine of lines) {
     if (rawLine.trim() === '' || rawLine.trimStart().startsWith('#')) continue;
@@ -67,13 +95,13 @@ function parseNestedYaml(content: string): NestedConfig {
 
     if (trimmed.endsWith(':')) {
       const key = trimmed.slice(0, -1);
-      let parent = stack.length > 0 ? stack[stack.length - 1] ?? null : null;
+      let parent = stack.length > 0 ? (stack[stack.length - 1] ?? null) : null;
 
       while (parent && indent <= parent.indent) {
         stack.pop();
-        parent = stack.length > 0 ? stack[stack.length - 1] ?? null : null;
+        parent = stack.length > 0 ? (stack[stack.length - 1] ?? null) : null;
       }
-      const newParent = stack.length > 0 ? stack[stack.length - 1] ?? null : null;
+      const newParent = stack.length > 0 ? (stack[stack.length - 1] ?? null) : null;
 
       const newObj: Record<string, unknown> = {};
       if (newParent) {

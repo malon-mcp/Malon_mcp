@@ -17,10 +17,7 @@ async function makeRepo() {
 test('rejects parent directory traversal', async () => {
   const root = await makeRepo();
   try {
-    await assert.rejects(
-      () => resolveInside(root, '../etc/passwd'),
-      PathEscapeError,
-    );
+    await assert.rejects(() => resolveInside(root, '../etc/passwd'), PathEscapeError);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -29,10 +26,7 @@ test('rejects parent directory traversal', async () => {
 test('rejects double-dot in middle of path', async () => {
   const root = await makeRepo();
   try {
-    await assert.rejects(
-      () => resolveInside(root, 'src/../../etc/passwd'),
-      PathEscapeError,
-    );
+    await assert.rejects(() => resolveInside(root, 'src/../../etc/passwd'), PathEscapeError);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -41,44 +35,43 @@ test('rejects double-dot in middle of path', async () => {
 test('rejects absolute path outside root', async () => {
   const root = await makeRepo();
   try {
-    await assert.rejects(
-      () => resolveInside(root, '/etc/passwd'),
-      PathEscapeError,
-    );
+    await assert.rejects(() => resolveInside(root, '/etc/passwd'), PathEscapeError);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('rejects symlink that resolves outside root', { skip: isWindows ? 'requires elevated privileges on Windows' : false }, async () => {
-  const root = await makeRepo();
-  const target = path.join(root, 'link-to-etc');
-  try {
-    await symlink('/etc/passwd', target);
-    await assert.rejects(
-      () => resolveInside(root, 'link-to-etc'),
-      PathEscapeError,
-    );
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
-});
+test(
+  'rejects symlink that resolves outside root',
+  { skip: isWindows ? 'requires elevated privileges on Windows' : false },
+  async () => {
+    const root = await makeRepo();
+    const target = path.join(root, 'link-to-etc');
+    try {
+      await symlink('/etc/passwd', target);
+      await assert.rejects(() => resolveInside(root, 'link-to-etc'), PathEscapeError);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
 
-test('rejects symlink inside repo resolving outside via nested dir', { skip: isWindows ? 'requires elevated privileges on Windows' : false }, async () => {
-  const root = await makeRepo();
-  const innerDir = path.join(root, 'inner');
-  const linkDir = path.join(innerDir, 'escape-link');
-  try {
-    await mkdir(innerDir);
-    await symlink('/etc', linkDir);
-    await assert.rejects(
-      () => resolveInside(root, 'inner/escape-link/passwd'),
-      PathEscapeError,
-    );
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
-});
+test(
+  'rejects symlink inside repo resolving outside via nested dir',
+  { skip: isWindows ? 'requires elevated privileges on Windows' : false },
+  async () => {
+    const root = await makeRepo();
+    const innerDir = path.join(root, 'inner');
+    const linkDir = path.join(innerDir, 'escape-link');
+    try {
+      await mkdir(innerDir);
+      await symlink('/etc', linkDir);
+      await assert.rejects(() => resolveInside(root, 'inner/escape-link/passwd'), PathEscapeError);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
 
 test('allows paths legitimately inside the repo', async () => {
   const root = await makeRepo();
@@ -91,7 +84,7 @@ test('allows paths legitimately inside the repo', async () => {
     const expected = await realpath(file);
     assert.equal(resolved, expected);
   } finally {
-    await rm(root, { recursive: true, force: true }); 
+    await rm(root, { recursive: true, force: true });
   }
 });
 

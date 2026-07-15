@@ -20,8 +20,8 @@ test('execFile does not interpret shell metacharacters in args', async () => {
 });
 
 test('execFile rejects non-existent command', async () => {
-  await assert.rejects(
-    () => execFileP('this-command-should-not-exist-12345', [], {
+  await assert.rejects(() =>
+    execFileP('this-command-should-not-exist-12345', [], {
       timeout: 1000,
       maxBuffer: 1024,
       shell: false,

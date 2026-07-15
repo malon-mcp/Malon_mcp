@@ -30,7 +30,7 @@ export function validatePricingAge(config: PricingConfig): void {
   if (ageDays >= REFUSE_DAYS) {
     throw new ConfigError(
       `Pricing config is ${Math.floor(ageDays)} days old (last_verified: ${config.last_verified}). ` +
-      'Update pricing.last_verified in .malon/config.yml before starting the server.',
+        'Update pricing.last_verified in .malon/config.yml before starting the server.',
       `Set pricing.last_verified to today's date in .malon/config.yml`,
     );
   }

@@ -2,12 +2,14 @@
 
 Each entry is an H2 heading followed by 2-3 sentences explaining the decision and its rationale.
 Format:
+
 ```
 ## <Short decision title>
 <Why this choice was made, what alternatives were considered, and the key trade-off. 2-3 sentences.>
 ```
 
 Example:
+
 ```
 ## Use tree-sitter for parsing, not a hand-rolled lexer
 tree-sitter gives us incremental, multi-language parsing with mature grammar

@@ -10,7 +10,7 @@ try {
   if (!/ignore-scripts=true/.test(npmrc)) {
     console.error(
       'WARNING: .npmrc does not contain ignore-scripts=true.\n' +
-      'Install scripts are a supply-chain risk. Add the setting back.',
+        'Install scripts are a supply-chain risk. Add the setting back.',
     );
     process.exit(1);
   }

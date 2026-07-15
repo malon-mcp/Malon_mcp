@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { initIndex, indexFile, closeDb, getDb } from '../../dist/index/index.js';
+import { initIndex, indexFile, closeDb } from '../../dist/index/index.js';
 import { initParser } from '../../dist/index/parser.js';
 
 let repoRoot = '';

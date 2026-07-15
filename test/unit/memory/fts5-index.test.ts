@@ -34,7 +34,9 @@ test('reindexMemoryFts5 indexes memory files into FTS5', async () => {
 
     await reindexMemoryFts5(root, db);
 
-    const rows = db.prepare('SELECT file_path, body FROM content_fts WHERE file_path LIKE ?').all('.malon/memory/%') as Array<{ file_path: string; body: string }>;
+    const rows = db
+      .prepare('SELECT file_path, body FROM content_fts WHERE file_path LIKE ?')
+      .all('.malon/memory/%') as { file_path: string; body: string }[];
 
     assert.equal(rows.length, 2);
 
@@ -69,7 +71,9 @@ test('reindexMemoryFts5 indexes session files', async () => {
 
     await reindexMemoryFts5(root, db);
 
-    const rows = db.prepare('SELECT file_path FROM content_fts WHERE content_fts MATCH ?').all('JWT') as Array<{ file_path: string }>;
+    const rows = db
+      .prepare('SELECT file_path FROM content_fts WHERE content_fts MATCH ?')
+      .all('JWT') as { file_path: string }[];
 
     assert.ok(rows.length > 0);
     assert.ok(rows[0]!.file_path.includes('.malon/memory/sessions'));
@@ -90,7 +94,10 @@ test('reindexMemoryFts5 replaces old index entries', async () => {
   `);
 
   try {
-    db.prepare('INSERT INTO content_fts (file_path, body) VALUES (?, ?)').run('.malon/memory/decisions.md', 'stale content');
+    db.prepare('INSERT INTO content_fts (file_path, body) VALUES (?, ?)').run(
+      '.malon/memory/decisions.md',
+      'stale content',
+    );
 
     await writeFile(
       path.join(root, '.malon', 'memory', 'decisions.md'),
@@ -99,7 +106,9 @@ test('reindexMemoryFts5 replaces old index entries', async () => {
 
     await reindexMemoryFts5(root, db);
 
-    const row = db.prepare('SELECT body FROM content_fts WHERE file_path = ?').get('.malon/memory/decisions.md') as { body: string } | undefined;
+    const row = db
+      .prepare('SELECT body FROM content_fts WHERE file_path = ?')
+      .get('.malon/memory/decisions.md') as { body: string } | undefined;
     assert.ok(row);
     assert.equal(row!.body.includes('stale'), false);
     assert.ok(row!.body.includes('Fresh'));
@@ -121,7 +130,9 @@ test('reindexMemoryFts5 handles empty memory directory', async () => {
 
   try {
     await reindexMemoryFts5(root, db);
-    const rows = db.prepare('SELECT count(*) as cnt FROM content_fts WHERE file_path LIKE ?').get('.malon/memory/%') as { cnt: number };
+    const rows = db
+      .prepare('SELECT count(*) as cnt FROM content_fts WHERE file_path LIKE ?')
+      .get('.malon/memory/%') as { cnt: number };
     assert.equal(rows.cnt, 0);
   } finally {
     db.close();

@@ -9,10 +9,7 @@ export async function callOllama(opts: LlmCallOptions): Promise<LlmResponse> {
     signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),
     body: JSON.stringify({
       model: opts.model ?? 'llama3.1-8b',
-      messages: [
-        { role: 'system', content: opts.systemPrompt },
-        ...opts.messages,
-      ],
+      messages: [{ role: 'system', content: opts.systemPrompt }, ...opts.messages],
       options: { num_predict: opts.maxTokens ?? 1024 },
     }),
   });

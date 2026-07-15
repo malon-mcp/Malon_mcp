@@ -35,7 +35,7 @@ export function checkRot(contextTokens: number): string | null {
     return 'context_size';
   }
 
-  for (const [file, count] of state.fileReadCounts) {
+  for (const [, count] of state.fileReadCounts) {
     if (count >= SESSION_FILE_READ_CAP) {
       return 'file_thrashing';
     }
@@ -44,7 +44,11 @@ export function checkRot(contextTokens: number): string | null {
   return null;
 }
 
-export async function createCheckpoint(repoRoot: string, cause: string, contextTokens: number): Promise<string | null> {
+export async function createCheckpoint(
+  repoRoot: string,
+  cause: string,
+  contextTokens: number,
+): Promise<string | null> {
   const now = Date.now();
   const cooldownMs = 60_000;
   if (now - state.lastCheckpointMs < cooldownMs) {
@@ -67,7 +71,12 @@ ${fileReadEntries || '  none'}
 - **Recommendation**: Context quality is dropping. Start a fresh session. Your progress is saved in this file.`;
 
   const { writeMemory } = await import('../memory/ledger.js');
-  const path = await writeMemory(repoRoot, 'session', `Checkpoint: ${cause} at ${timestamp}`, summary);
+  const path = await writeMemory(
+    repoRoot,
+    'session',
+    `Checkpoint: ${cause} at ${timestamp}`,
+    summary,
+  );
   state.lastCheckpointMs = now;
   logger.info({ cause, path, contextTokens }, 'rot_checkpoint_created');
   return path;

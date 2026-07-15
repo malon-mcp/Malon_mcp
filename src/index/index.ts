@@ -4,11 +4,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { logger } from '../util/log.js';
-import { initParser, parseFileContent, detectLanguage } from './parser.js';
+import { initParser, parseFileContent, detectLanguage, SUPPORTED_EXTENSIONS } from './parser.js';
 
 let db: DatabaseType | null = null;
-let currentDbPath: string = '';
-let repoRoot: string = '';
+let repoRoot = '';
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -57,7 +56,7 @@ CREATE TABLE IF NOT EXISTS index_meta (
 );
 `;
 
-export function initIndex(dbPath: string, root: string = ''): void {
+export function initIndex(dbPath: string, root = ''): void {
   const isNew = !(db && db.open);
 
   if (!isNew) {
@@ -65,18 +64,29 @@ export function initIndex(dbPath: string, root: string = ''): void {
   }
 
   db = new Database(dbPath);
-  currentDbPath = dbPath;
   repoRoot = root;
   db.pragma('journal_mode = WAL');
   db.pragma('synchronous = NORMAL');
   db.exec(SCHEMA_SQL);
 
-  const versionRow = db.prepare('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1').get() as { version: number } | undefined;
+  const versionRow = db
+    .prepare('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1')
+    .get() as { version: number } | undefined;
   if (!versionRow) {
     db.prepare('INSERT INTO schema_version (version) VALUES (1)').run();
   }
 
-  db.prepare('INSERT OR IGNORE INTO index_meta(key, value) VALUES (\'last_indexed_sha\', \'\')').run();
+  db.prepare("INSERT OR IGNORE INTO index_meta(key, value) VALUES ('last_indexed_sha', '')").run();
+
+  try {
+    db.prepare('SELECT COUNT(*) FROM content_fts').get();
+  } catch {
+    logger.warn({}, 'fts5_table_corrupted_rebuilding');
+    db.exec('DROP TABLE IF EXISTS content_fts');
+    db.exec(
+      "CREATE VIRTUAL TABLE IF NOT EXISTS content_fts USING fts5(file_path UNINDEXED, body, tokenize = 'porter unicode61')",
+    );
+  }
 
   logger.info({ path: dbPath, isNew: !db.open }, 'index_initialized');
 }
@@ -94,7 +104,6 @@ export function closeDb(): void {
   if (!db || !db.open) return;
   db.close();
   db = null;
-  currentDbPath = '';
   repoRoot = '';
   logger.info({}, 'index_closed');
 }
@@ -131,7 +140,9 @@ export async function indexFile(absolutePath: string): Promise<void> {
   const { symbols, edges } = result;
 
   const deleteSymbols = db!.prepare('DELETE FROM symbols WHERE file_path = ?');
-  const deleteEdges = db!.prepare('DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)');
+  const deleteEdges = db!.prepare(
+    'DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)',
+  );
   const insertSymbol = db!.prepare(`
     INSERT INTO symbols (file_path, name, kind, start_line, end_line, signature, body_hash)
     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -150,7 +161,15 @@ export async function indexFile(absolutePath: string): Promise<void> {
 
     const symbolIds: number[] = [];
     for (const sym of symbols) {
-      const info = insertSymbol.run(absolutePath, sym.name, sym.kind, sym.start_line, sym.end_line, sym.signature, sym.body_hash);
+      const info = insertSymbol.run(
+        absolutePath,
+        sym.name,
+        sym.kind,
+        sym.start_line,
+        sym.end_line,
+        sym.signature,
+        sym.body_hash,
+      );
       symbolIds.push(Number(info.lastInsertRowid));
     }
 
@@ -170,7 +189,9 @@ export function removeFile(absolutePath: string): void {
   if (!db || !db.open) throw new Error('Index not initialized');
   const deleteSymbols = db.prepare('DELETE FROM symbols WHERE file_path = ?');
   const deleteFts = db.prepare('DELETE FROM content_fts WHERE file_path = ?');
-  const deleteEdges = db.prepare('DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)');
+  const deleteEdges = db.prepare(
+    'DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)',
+  );
   const deleteFile = db.prepare('DELETE FROM files WHERE path = ?');
   const transaction = db.transaction(() => {
     deleteEdges.run(absolutePath);
@@ -181,15 +202,26 @@ export function removeFile(absolutePath: string): void {
   transaction();
 }
 
-export async function indexRepo(root: string): Promise<{ files_indexed: number; files_skipped: number }> {
+export async function indexRepo(
+  root: string,
+): Promise<{ files_indexed: number; files_skipped: number }> {
   await initParser();
 
   let filesIndexed = 0;
   let filesSkipped = 0;
 
-  const supportedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py']);
+  const supportedExtensions = SUPPORTED_EXTENSIONS;
 
-  const ignoreDirs = new Set(['node_modules', '.git', '.malon', 'dist', '.next', 'build', 'coverage', '.nyc_output']);
+  const ignoreDirs = new Set([
+    'node_modules',
+    '.git',
+    '.malon',
+    'dist',
+    '.next',
+    'build',
+    'coverage',
+    '.nyc_output',
+  ]);
 
   async function walk(dir: string): Promise<void> {
     let entries: string[];
@@ -229,6 +261,13 @@ export async function indexRepo(root: string): Promise<{ files_indexed: number; 
   }
 
   await walk(root);
+
+  if (filesIndexed === 0 && filesSkipped === 0) {
+    logger.warn({ root }, 'index_empty_repo_no_supported_files');
+  } else if (filesIndexed === 0 && filesSkipped > 0) {
+    logger.warn({ root, filesSkipped }, 'index_no_supported_files_all_skipped');
+  }
+
   logger.info({ filesIndexed, filesSkipped }, 'index_repo_complete');
   return { files_indexed: filesIndexed, files_skipped: filesSkipped };
 }

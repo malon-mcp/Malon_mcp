@@ -2,9 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { logger } from '../util/log.js';
 import { indexFile, removeFile } from './index.js';
-import { detectLanguage } from './parser.js';
+import { detectLanguage, SUPPORTED_EXTENSIONS } from './parser.js';
 
-const IGNORE_DIRS = new Set(['node_modules', '.git', '.malon', 'dist', '.next', 'build', 'coverage', '.nyc_output']);
+const IGNORE_DIRS = new Set([
+  'node_modules',
+  '.git',
+  '.malon',
+  'dist',
+  '.next',
+  'build',
+  'coverage',
+  '.nyc_output',
+]);
 const DEBOUNCE_MS = 2_000;
 
 interface WatcherState {
@@ -26,7 +35,7 @@ function shouldWatch(entryPath: string): boolean {
   if (IGNORE_DIRS.has(parsed.dir.split(path.sep).pop() ?? '')) return false;
   if (IGNORE_DIRS.has(parsed.name)) return false;
   const ext = parsed.ext.toLowerCase();
-  return ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py'].includes(ext);
+  return SUPPORTED_EXTENSIONS.has(ext);
 }
 
 function flushPending(): void {
@@ -45,7 +54,9 @@ function flushPending(): void {
       fs.accessSync(filePath, fs.constants.F_OK);
       const lang = detectLanguage(filePath);
       if (!lang) continue;
-      indexFile(filePath).then(() => indexed.push(filePath)).catch(() => removed.push(filePath));
+      indexFile(filePath)
+        .then(() => indexed.push(filePath))
+        .catch(() => removed.push(filePath));
     } catch {
       removeFile(filePath);
       removed.push(filePath);

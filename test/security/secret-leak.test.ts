@@ -13,10 +13,7 @@ test('rejects Anthropic API key', () => {
 test('rejects OpenAI API key', () => {
   const t3 = String.fromCharCode(84, 51, 66, 108, 98, 107, 70, 74);
   const key = 'sk-' + 'x'.repeat(24) + t3 + 'x'.repeat(24);
-  assert.throws(
-    () => scanForSecrets(key),
-    SecretLeakSuspectedError,
-  );
+  assert.throws(() => scanForSecrets(key), SecretLeakSuspectedError);
 });
 
 test('rejects GitHub PAT', () => {
@@ -27,10 +24,7 @@ test('rejects GitHub PAT', () => {
 });
 
 test('rejects AWS access key', () => {
-  assert.throws(
-    () => scanForSecrets('AKIA1234567890123456'),
-    SecretLeakSuspectedError,
-  );
+  assert.throws(() => scanForSecrets('AKIA1234567890123456'), SecretLeakSuspectedError);
 });
 
 test('rejects private key block', () => {
@@ -48,15 +42,13 @@ test('rejects JWT token', () => {
 });
 
 test('allows clean content', () => {
-  assert.doesNotThrow(
-    () => scanForSecrets('This is a normal memory entry about code architecture.'),
+  assert.doesNotThrow(() =>
+    scanForSecrets('This is a normal memory entry about code architecture.'),
   );
 });
 
 test('allows placeholder API key patterns (if allow-listed)', () => {
   // This tests the current behavior with no allow-list — placeholder sk-test- patterns
   // don't match the Anthropic regex because it requires sk-ant- prefix
-  assert.doesNotThrow(
-    () => scanForSecrets('sk-test-xxxxxxxxxxxxxxxxxxxxxxxx'),
-  );
+  assert.doesNotThrow(() => scanForSecrets('sk-test-xxxxxxxxxxxxxxxxxxxxxxxx'));
 });

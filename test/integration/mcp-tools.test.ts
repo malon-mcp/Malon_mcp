@@ -13,7 +13,9 @@ test('malon_search returns expected schema', async () => {
     'malon_search',
     'Search test tool',
     { query: z.string().min(1).max(512).describe('query') },
-    async () => ({ content: [{ type: 'text', text: JSON.stringify({ spans: [], not_found: true }) }] }),
+    async () => ({
+      content: [{ type: 'text', text: JSON.stringify({ spans: [], not_found: true }) }],
+    }),
   );
 
   await server.connect(serverTransport);

@@ -1,0 +1,37 @@
+use std::collections::HashMap;
+use std::fs;
+
+pub struct User {
+    pub name: String,
+    pub age: u32,
+}
+
+pub trait Greeter {
+    fn greet(&self, name: &str) -> String;
+}
+
+pub fn greet(user: &User) -> String {
+    format!("Hello, {}!", user.name)
+}
+
+pub struct GreeterImpl {
+    prefix: String,
+}
+
+impl Greeter for GreeterImpl {
+    fn greet(&self, name: &str) -> String {
+        format!("{}, {}!", self.prefix, name)
+    }
+}
+
+const PI: f64 = 3.14159;
+static VERSION: &str = "1.0.0";
+
+type Result<T> = std::result::Result<T, String>;
+
+fn internal_helper() {}
+
+enum Status {
+    Active,
+    Inactive,
+}

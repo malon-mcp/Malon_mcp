@@ -1,7 +1,8 @@
 # Execution.md — Malon Build Plan
+
 ### From zero → free tier → paying customers, in order
 
-*Built from your four source docs: Idea.md, malon-architecture.mmd, malon-threat-model.mmd, and Security_system_maintenance.md. Nothing here contradicts them — this is those four documents merged into one chronological run sheet.*
+_Built from your four source docs: Idea.md, malon-architecture.mmd, malon-threat-model.mmd, and Security_system_maintenance.md. Nothing here contradicts them — this is those four documents merged into one chronological run sheet._
 
 ---
 
@@ -13,7 +14,7 @@ You said you're not writing or debugging code — your AI coding agent does that
 2. **The security gate for that phase** — pulled from your threat-model's stage gates (P0–P4). You do not move to the next phase until that phase's gate is closed.
 3. **A prompt block you can hand to your AI coding agent almost verbatim**, plus a **"how you verify it without reading code"** checklist — because your job is to check outcomes, not syntax.
 
-Treat every phase as a gate, not a suggestion. The order exists because the security doc is explicit that some of this (entity, `.gitignore`, npm 2FA) is far cheaper to do *before* code exists than to retrofit after.
+Treat every phase as a gate, not a suggestion. The order exists because the security doc is explicit that some of this (entity, `.gitignore`, npm 2FA) is far cheaper to do _before_ code exists than to retrofit after.
 
 ---
 
@@ -23,12 +24,12 @@ Treat every phase as a gate, not a suggestion. The order exists because the secu
 
 Reasoning:
 
-| | Why |
-|---|---|
-| **Why not public from day 1** | Phase 1 code is where secrets can accidentally get committed, where the shell/path-security patterns aren't hardened yet, and where a half-built product is a bad first impression. Nothing about "startup" requires public code on day one. |
-| **Why public eventually, and fairly soon** | Your own architecture diagram already plans `npx` distribution and an MIT license — this product's entire pitch is *"trust us to read your codebase."* For that pitch, an engineer being able to open your source and verify "does this actually stay local, does it actually not phone home with my code" is one of the strongest trust signals available in developer tooling. Your security doc says this outright: *"trust is the actual sales cycle."* A closed-source local agent asking developers to trust it blind is a much harder sell than an open one they can audit. |
-| **Why not delay it for years** | The longer you stay closed, the more it looks like you have something to hide, in a market where your closest comparables (MCP servers, dev CLI tools) are overwhelmingly open source. |
-| **The real answer isn't binary** | This is an **open-core model**, not "open source vs. closed source" as a single toggle: the local MCP server / CLI (the thing that reads their code) goes public and MIT-licensed. Anything hosted later — team dashboard, billing, shared memory sync, SOC 2 tooling — stays private, closed-source, and is what you eventually charge for. This directly answers your free-then-premium question: **the free tier is the open-source core; the premium tier is the closed hosted layer on top of it.** |
+|                                            | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Why not public from day 1**              | Phase 1 code is where secrets can accidentally get committed, where the shell/path-security patterns aren't hardened yet, and where a half-built product is a bad first impression. Nothing about "startup" requires public code on day one.                                                                                                                                                                                                                                                                                                                                       |
+| **Why public eventually, and fairly soon** | Your own architecture diagram already plans `npx` distribution and an MIT license — this product's entire pitch is _"trust us to read your codebase."_ For that pitch, an engineer being able to open your source and verify "does this actually stay local, does it actually not phone home with my code" is one of the strongest trust signals available in developer tooling. Your security doc says this outright: _"trust is the actual sales cycle."_ A closed-source local agent asking developers to trust it blind is a much harder sell than an open one they can audit. |
+| **Why not delay it for years**             | The longer you stay closed, the more it looks like you have something to hide, in a market where your closest comparables (MCP servers, dev CLI tools) are overwhelmingly open source.                                                                                                                                                                                                                                                                                                                                                                                             |
+| **The real answer isn't binary**           | This is an **open-core model**, not "open source vs. closed source" as a single toggle: the local MCP server / CLI (the thing that reads their code) goes public and MIT-licensed. Anything hosted later — team dashboard, billing, shared memory sync, SOC 2 tooling — stays private, closed-source, and is what you eventually charge for. This directly answers your free-then-premium question: **the free tier is the open-source core; the premium tier is the closed hosted layer on top of it.**                                                                           |
 
 **Concrete trigger to flip public:** all of Phase 2's security checklist is closed (secret scanning in CI, path canonicalization + repo-boundary checks shipped, `.gitignore` correct, `SECURITY.md` written, human-review process in place). Flipping public before that checklist is closed is the one sequencing mistake this plan is built to prevent.
 
@@ -40,7 +41,7 @@ Reasoning:
 **Duration:** ~1–2 weeks, can overlap with early Phase 1 setup work.
 **Your role:** 100% of this phase. There's no code to review yet.
 
-- [ ] **Form a real entity** (LLC / Private Limited / C-Corp depending on where you'll be based and how you plan to raise money later). This is your liability firewall — without it, a lawsuit against "Malon" is a lawsuit against *you personally*.
+- [ ] **Form a real entity** (LLC / Private Limited / C-Corp depending on where you'll be based and how you plan to raise money later). This is your liability firewall — without it, a lawsuit against "Malon" is a lawsuit against _you personally_.
 - [ ] **Register your domain** for whatever name you land on (Malon is explicitly a placeholder codename in your own doc — decide the real name now, it touches your npm package name, domain, and trademark search).
 - [ ] **Create the GitHub repo as PRIVATE.**
 - [ ] **Write the `.gitignore` before your first commit** — this is the single highest-leverage five minutes in this whole plan:
@@ -68,6 +69,7 @@ This is your own Idea.md's "Phase 0" — renamed here to avoid confusion with th
 **Goal:** `malon_search` and `malon status` working, independently demoable.
 **Duration:** 2–3 weeks.
 **What gets built:**
+
 - Index & Graph Service — tree-sitter parse + SQLite with FTS5, incremental (only re-parses changed files)
 - Search Subagent — isolated context, Haiku-class model by default, 2–4 rounds of grep/graph-walk, returns file:line spans only
 - Orchestrator — routes MCP tool calls, orders context for cache-friendly injection
@@ -117,8 +119,8 @@ touches.
 
 ### How you verify this phase, without reading code
 
-- [ ] Ask your AI: *"Walk me through what happens if I ask malon_search to read a file outside the repo — show me it refuses."*
-- [ ] Ask your AI: *"Show me the SECURITY.md you wrote — does it say plainly where my code goes?"* Read that one file yourself; it's written for humans.
+- [ ] Ask your AI: _"Walk me through what happens if I ask malon_search to read a file outside the repo — show me it refuses."_
+- [ ] Ask your AI: _"Show me the SECURITY.md you wrote — does it say plainly where my code goes?"_ Read that one file yourself; it's written for humans.
 - [ ] Run `malon status` yourself and confirm it prints a live token/cost number.
 - [ ] Check that a Gitleaks report and a Semgrep report exist and are clean (ask your AI to summarize any findings in plain English — don't accept "0 issues" without seeing the actual report).
 - [ ] Confirm every PR so far has a review comment from you before merge — even if the review is "AI, explain this to me and I approve." **Never let anything auto-merge.**
@@ -151,6 +153,7 @@ touches.
 ### The repo-visibility switch happens at the end of this phase
 
 Once the two checklists above are both closed:
+
 - [ ] Flip the GitHub repo to **public**, MIT license.
 - [ ] Confirm `git log` history doesn't contain anything you gitignored later — if it does, that history needs scrubbing (BFG Repo-Cleaner or `git filter-repo`) **before** the flip, not after. Ask your AI to check this specifically; it's the one thing a "just add to .gitignore now" fix doesn't retroactively solve.
 
@@ -179,6 +182,7 @@ This is your own Idea.md's "Phase 1" — the harder half of the original problem
 
 **Duration:** 4–6 weeks.
 **What gets built:**
+
 - Memory Ledger: `decisions.md`, `conventions.md`, `rejected.md`, `sessions/*.md` — auto-written at checkpoint time, plus an explicit `malon_memory_write` tool
 - Rot Governor: the two cheap heuristics only (context size vs. repo-calibrated ceiling; same-file re-read count) — resist the urge to build a fancier hallucination classifier yet, per your own doc
 
@@ -232,7 +236,8 @@ You said you want free-for-a-while before premium — this is that window. Don't
 
 ### What becomes premium (open-core model)
 
-Keep the **local MCP server / CLI free and open source, forever** — that's your trust anchor and your distribution engine. Gate the *hosted* layer instead:
+Keep the **local MCP server / CLI free and open source, forever** — that's your trust anchor and your distribution engine. Gate the _hosted_ layer instead:
+
 - Web dashboard (spend, tokens-saved history, team rollups)
 - Team-shared memory sync
 - Outcome-based billing meter (charging against tokens actually saved — your own doc flags this as the natural premium meter, since it charges for the value delivered, not the resource consumed)
@@ -244,7 +249,7 @@ Keep the **local MCP server / CLI free and open source, forever** — that's you
 - [ ] Cyber liability + Tech E&O insurance, $1M limit floor (commonly $75–500/month for a clean early-stage startup; this is also frequently a hard prerequisite for enterprise contracts, not a nice-to-have).
 - [ ] Move your npm publishing off long-lived tokens onto **Trusted Publishing** (OIDC, tied to CI) with **provenance attestation** — this is the point where your publish pipeline becomes a genuinely attractive supply-chain target, since anyone running `npx malon init` executes whatever you publish with full read access to their codebase.
 - [ ] A Data Processing Agreement (DPA) template ready to send same-day, not "give me three weeks."
-- [ ] A written incident-response plan: who does what in the first hour of a suspected breach, a pre-drafted (unpublished) customer notification template, legal counsel's contact info saved somewhere real. If you have India-based customers or operations, this must account for **CERT-In's 6-hour reporting clock**, which starts the moment you *notice* an incident, not when you finish investigating.
+- [ ] A written incident-response plan: who does what in the first hour of a suspected breach, a pre-drafted (unpublished) customer notification template, legal counsel's contact info saved somewhere real. If you have India-based customers or operations, this must account for **CERT-In's 6-hour reporting clock**, which starts the moment you _notice_ an incident, not when you finish investigating.
 - [ ] A real, working data retention & deletion path for anything the hosted layer stores about a user or team — not "email support."
 - [ ] For hosted auth: proper session handling, MFA on your own admin access, least-privilege service accounts, no shared credentials.
 
@@ -254,7 +259,7 @@ Keep the **local MCP server / CLI free and open source, forever** — that's you
 
 ## Phase 7 — Enterprise Readiness (later — don't rush this)
 
-Trigger this phase by *demand*, not by calendar. You'll know it's time when a mid-market or enterprise prospect sends you a 100–200 question security spreadsheet.
+Trigger this phase by _demand_, not by calendar. You'll know it's time when a mid-market or enterprise prospect sends you a 100–200 question security spreadsheet.
 
 - [ ] SOC 2 Type 1 underway via an automation platform (Vanta, Drata, Secureframe, Sprinto — get quotes from at least two). Budget roughly $10,000–$40,000 all-in for Type 1 in year one; Type 2 (what most enterprise deals actually want, since it tests controls over a 3–12 month window) runs $25,000–$80,000.
 - [ ] Formal, documented access-control and change-management process.
@@ -265,12 +270,12 @@ Trigger this phase by *demand*, not by calendar. You'll know it's time when a mi
 
 ## Quick reference — phase-to-repo-visibility map
 
-| Phase | Repo state | Why |
-|---|---|---|
-| 0 – Foundation | Private | Nothing to show yet |
-| 1 – Wedge | Private | Security patterns not yet hardened |
-| 2 – Hardening | Private → flips to **Public** at the end | Gate: full security + legal checklist closed |
-| 3 – Free launch | Public (MIT) | Trust lever for a "trust us with your code" product |
-| 4–5 – Close loop / grow | Public (MIT) | Core stays open |
-| 6 – Premium | Core stays public; **hosted layer is closed-source, separate repo** | Open-core: free tool is the funnel, hosted layer is the product you sell |
-| 7 – Enterprise | Same split, now with SOC 2 evidence | — |
+| Phase                   | Repo state                                                          | Why                                                                      |
+| ----------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 0 – Foundation          | Private                                                             | Nothing to show yet                                                      |
+| 1 – Wedge               | Private                                                             | Security patterns not yet hardened                                       |
+| 2 – Hardening           | Private → flips to **Public** at the end                            | Gate: full security + legal checklist closed                             |
+| 3 – Free launch         | Public (MIT)                                                        | Trust lever for a "trust us with your code" product                      |
+| 4–5 – Close loop / grow | Public (MIT)                                                        | Core stays open                                                          |
+| 6 – Premium             | Core stays public; **hosted layer is closed-source, separate repo** | Open-core: free tool is the funnel, hosted layer is the product you sell |
+| 7 – Enterprise          | Same split, now with SOC 2 evidence                                 | —                                                                        |

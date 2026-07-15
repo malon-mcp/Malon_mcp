@@ -47,10 +47,7 @@ export async function resolveInside(repoRoot: string, requested: string): Promis
   return targetReal;
 }
 
-export async function safeRead(
-  repoRoot: string,
-  requested: string,
-): Promise<string> {
+export async function safeRead(repoRoot: string, requested: string): Promise<string> {
   const resolved = await resolveInside(repoRoot, requested);
   return fs.readFile(resolved, 'utf8');
 }

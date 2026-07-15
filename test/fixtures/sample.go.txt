@@ -1,0 +1,31 @@
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+type User struct {
+	Name string
+	Age  int
+}
+
+func greet(u User) string {
+	return fmt.Sprintf("Hello, %s!", u.Name)
+}
+
+type Greeter interface {
+	Greet(name string) string
+}
+
+type GreeterImpl struct {
+	Prefix string
+}
+
+func (g *GreeterImpl) Greet(name string) string {
+	return g.Prefix + ", " + name + "!"
+}
+
+const greeting = "Hello"
+
+var version = "1.0.0"

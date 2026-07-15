@@ -2,7 +2,7 @@ export interface LlmCallOptions {
   provider: string;
   model: string;
   systemPrompt: string;
-  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  messages: { role: 'user' | 'assistant'; content: string }[];
   maxTokens?: number;
   timeoutMs?: number;
 }

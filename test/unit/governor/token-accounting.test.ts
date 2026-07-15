@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recordUsage, getSessionStats, computeTokensSaved, getUsageRecords } from '../../../dist/governor/token-accounting.js';
+import {
+  recordUsage,
+  getSessionStats,
+  computeTokensSaved,
+  getUsageRecords,
+} from '../../../dist/governor/token-accounting.js';
 
 test('recordUsage and getSessionStats work correctly', () => {
   while (getUsageRecords().length > 0) {

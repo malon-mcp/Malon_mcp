@@ -2,7 +2,7 @@
 
 **Malon MCP Server**
 
-*Version 0.0.1 — In Development*
+_Version 0.0.1 — In Development_
 
 > **This policy is a skeleton placeholder and has not been reviewed by legal counsel.**
 > It must be reviewed and finalized by a qualified lawyer before the first real user.
@@ -14,18 +14,18 @@ The Software runs entirely on your local machine. It does not phone home by defa
 
 **Data that leaves your machine (only when you use specific features):**
 
-| Feature | Data sent | Destination | Opt-out |
-|---------|-----------|-------------|---------|
-| `malon_search` | 1–3 short code spans (file:line) | Your configured LLM provider (default: Anthropic) | Use local Ollama instead |
-| Telemetry (if enabled) | Aggregate event counts, error classes | Malon analytics endpoint | Don't enable it |
+| Feature                | Data sent                             | Destination                                       | Opt-out                  |
+| ---------------------- | ------------------------------------- | ------------------------------------------------- | ------------------------ |
+| `malon_search`         | 1–3 short code spans (file:line)      | Your configured LLM provider (default: Anthropic) | Use local Ollama instead |
+| Telemetry (if enabled) | Aggregate event counts, error classes | Malon analytics endpoint                          | Don't enable it          |
 
 **Data stored locally on your machine:**
 
-| File | Contents | Git-tracked? |
-|------|----------|-------------|
-| `.malon/index.db` | Code index (symbols, imports, FTS) | No (gitignored) |
-| `.malon/usage.log` | Query records, token counts, costs | No (gitignored) |
-| `.malon/memory/*.md` | Agent-curated decisions and conventions | Yes |
+| File                 | Contents                                | Git-tracked?    |
+| -------------------- | --------------------------------------- | --------------- |
+| `.malon/index.db`    | Code index (symbols, imports, FTS)      | No (gitignored) |
+| `.malon/usage.log`   | Query records, token counts, costs      | No (gitignored) |
+| `.malon/memory/*.md` | Agent-curated decisions and conventions | Yes             |
 
 ## 2. LLM Provider
 
@@ -38,6 +38,7 @@ When you use `malon_search`, the Search Subagent sends query context to the LLM 
 ## 3. Telemetry
 
 Telemetry is opt-in. When enabled, we collect:
+
 - Aggregate counts of `malon_search`, `malon_memory_*`, and `malon_status` calls.
 - Error class names (never file paths, code content, or queries).
 - Latency percentiles.
@@ -49,6 +50,7 @@ We never collect file paths, source code, queries, or any personally identifiabl
 Because the Software runs locally and no data is sent to us by default, there is no user account, no cloud storage, and no personal data for us to delete or export. Your data is your files on your machine.
 
 If telemetry is enabled, you may:
+
 - Opt out at any time by disabling telemetry in `config.yml`.
 - Request deletion of collected telemetry data by emailing `security@yourdomain`.
 
@@ -62,4 +64,4 @@ Email: `security@yourdomain`
 
 ---
 
-*Jurisdiction: India (DPDPA 2023 compliant when finalized)*
+_Jurisdiction: India (DPDPA 2023 compliant when finalized)_

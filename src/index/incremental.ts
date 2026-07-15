@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 import path from 'node:path';
 import { logger } from '../util/log.js';
 import { getDb, indexFile } from './index.js';
+import { SUPPORTED_EXTENSIONS } from './parser.js';
 
 const execFileP = promisify(execFile);
 
@@ -10,10 +11,14 @@ const MINIMAL_ENV: NodeJS.ProcessEnv = {
   PATH: process.env['PATH'] ?? '',
 };
 
-export async function incrementalIndex(repoRoot: string): Promise<{ files_indexed: number; files_removed: number }> {
+export async function incrementalIndex(
+  repoRoot: string,
+): Promise<{ files_indexed: number; files_removed: number }> {
   const db = getDb();
 
-  const lastIndexedSha = db.prepare("SELECT value FROM index_meta WHERE key = 'last_indexed_sha'").get() as { value: string } | undefined;
+  const lastIndexedSha = db
+    .prepare("SELECT value FROM index_meta WHERE key = 'last_indexed_sha'")
+    .get() as { value: string } | undefined;
   const fromSha = lastIndexedSha?.value ?? '';
 
   if (!fromSha) {
@@ -61,9 +66,12 @@ export async function incrementalIndex(repoRoot: string): Promise<{ files_indexe
   }
 
   const changedFiles = diffOutput.split('\n').filter(Boolean);
-  logger.info({ count: changedFiles.length, fromSha, toSha: headSha }, 'incremental_changes_detected');
+  logger.info(
+    { count: changedFiles.length, fromSha, toSha: headSha },
+    'incremental_changes_detected',
+  );
 
-  const supportedExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py']);
+  const supportedExtensions = SUPPORTED_EXTENSIONS;
 
   let filesIndexed = 0;
   let filesRemoved = 0;
@@ -79,7 +87,7 @@ export async function incrementalIndex(repoRoot: string): Promise<{ files_indexe
     }
 
     try {
-      const { stdout } = await execFileP('git', ['show', `HEAD:${relativePath}`], {
+      await execFileP('git', ['show', `HEAD:${relativePath}`], {
         cwd: repoRoot,
         timeout: 5000,
         maxBuffer: 8 * 1024 * 1024,
@@ -92,7 +100,9 @@ export async function incrementalIndex(repoRoot: string): Promise<{ files_indexe
       try {
         const deleteSymbols = db.prepare('DELETE FROM symbols WHERE file_path = ?');
         const deleteFts = db.prepare('DELETE FROM content_fts WHERE file_path = ?');
-        const deleteEdges = db.prepare('DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)');
+        const deleteEdges = db.prepare(
+          'DELETE FROM edges WHERE from_symbol_id IN (SELECT id FROM symbols WHERE file_path = ?)',
+        );
         const deleteFile = db.prepare('DELETE FROM files WHERE path = ?');
 
         const transaction = db.transaction(() => {

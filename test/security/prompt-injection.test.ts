@@ -32,7 +32,12 @@ test('Sanitizer strips special FTS5 chars that could be injection vectors', () =
 test('malon_search output schema is well-typed', () => {
   const validOutput = {
     spans: [
-      { file_path: 'src/main.ts', start_line: 10, end_line: 15, justification: 'Found the main function' },
+      {
+        file_path: 'src/main.ts',
+        start_line: 10,
+        end_line: 15,
+        justification: 'Found the main function',
+      },
     ],
     not_found: false,
   };

@@ -65,10 +65,7 @@ test('buildContextString concatenates in stable-first order', () => {
 });
 
 test('totalLength sums all content lengths', () => {
-  const items: ContextItem[] = [
-    createStableItem('a', 'hello'),
-    createDynamicItem('b', 'world'),
-  ];
+  const items: ContextItem[] = [createStableItem('a', 'hello'), createDynamicItem('b', 'world')];
 
   const result = orderContext(items);
   assert.equal(result.totalLength, 10);

@@ -20,9 +20,13 @@ export class SanitizedFts5Error extends MalonError {
 export class SubagentTimeoutError extends MalonError {
   constructor(
     public readonly round: number,
-    partial: unknown,
+    _partial: unknown,
   ) {
-    super('subagent_timeout', `Subagent timed out on round ${round}`, 'Increase search.subagent_timeout_ms in config.yml');
+    super(
+      'subagent_timeout',
+      `Subagent timed out on round ${round}`,
+      'Increase search.subagent_timeout_ms in config.yml',
+    );
     this.name = 'SubagentTimeoutError';
   }
 }
@@ -32,7 +36,11 @@ export class SecretLeakSuspectedError extends MalonError {
     public readonly pattern: string,
     excerpt: string,
   ) {
-    super('secret_leak', `Pattern "${pattern}" matched. Excerpt: ${excerpt}`, 'Redact the sensitive content and retry.');
+    super(
+      'secret_leak',
+      `Pattern "${pattern}" matched. Excerpt: ${excerpt}`,
+      'Redact the sensitive content and retry.',
+    );
     this.name = 'SecretLeakSuspectedError';
   }
 }
@@ -46,7 +54,11 @@ export class ConfigError extends MalonError {
 
 export class IndexStaleError extends MalonError {
   constructor(lastSha: string, headSha: string) {
-    super('index_stale', `Index is stale (${lastSha} vs ${headSha})`, 'Run `malon init --incremental`');
+    super(
+      'index_stale',
+      `Index is stale (${lastSha} vs ${headSha})`,
+      'Run `malon init --incremental`',
+    );
     this.name = 'IndexStaleError';
   }
 }

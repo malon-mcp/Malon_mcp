@@ -35,7 +35,12 @@ export function setRateLimitConfig(opts: {
   }
 }
 
-export function getRateLimitState(): { callCount: number; totalTokensUsed: number; remainingCalls: number; remainingTokens: number } {
+export function getRateLimitState(): {
+  callCount: number;
+  totalTokensUsed: number;
+  remainingCalls: number;
+  remainingTokens: number;
+} {
   return {
     callCount: sessionState.callCount,
     totalTokensUsed: sessionState.totalTokensUsed,
@@ -53,7 +58,10 @@ export function checkRateLimit(tokensToAdd: number): void {
   }
 
   if (sessionState.callCount >= sessionState.maxCallsPerSession) {
-    logger.warn({ callCount: sessionState.callCount, maxCalls: sessionState.maxCallsPerSession }, 'rate_limit_calls_exceeded');
+    logger.warn(
+      { callCount: sessionState.callCount, maxCalls: sessionState.maxCallsPerSession },
+      'rate_limit_calls_exceeded',
+    );
     throw new MalonError(
       'config',
       `Rate limit exceeded: ${sessionState.maxCallsPerSession} calls per window`,
@@ -62,7 +70,10 @@ export function checkRateLimit(tokensToAdd: number): void {
   }
 
   if (sessionState.totalTokensUsed + tokensToAdd > sessionState.maxTokensPerSession) {
-    logger.warn({ totalTokensUsed: sessionState.totalTokensUsed, tokensToAdd }, 'rate_limit_tokens_exceeded');
+    logger.warn(
+      { totalTokensUsed: sessionState.totalTokensUsed, tokensToAdd },
+      'rate_limit_tokens_exceeded',
+    );
     throw new MalonError(
       'config',
       `Token rate limit exceeded: ${sessionState.maxTokensPerSession} tokens per session`,

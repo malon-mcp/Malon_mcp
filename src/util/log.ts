@@ -31,25 +31,25 @@ export const logger = {
   error: (meta: Record<string, unknown> | string, msg?: string) => {
     if (!shouldLog('error')) return;
     const actual = typeof meta === 'string' ? {} : meta;
-    const m = typeof meta === 'string' ? meta : msg ?? '';
+    const m = typeof meta === 'string' ? meta : (msg ?? '');
     process.stderr.write(formatLog('error', m, actual) + '\n');
   },
   warn: (meta: Record<string, unknown> | string, msg?: string) => {
     if (!shouldLog('warn')) return;
     const actual = typeof meta === 'string' ? {} : meta;
-    const m = typeof meta === 'string' ? meta : msg ?? '';
+    const m = typeof meta === 'string' ? meta : (msg ?? '');
     process.stderr.write(formatLog('warn', m, actual) + '\n');
   },
   info: (meta: Record<string, unknown> | string, msg?: string) => {
     if (!shouldLog('info')) return;
     const actual = typeof meta === 'string' ? {} : meta;
-    const m = typeof meta === 'string' ? meta : msg ?? '';
+    const m = typeof meta === 'string' ? meta : (msg ?? '');
     process.stderr.write(formatLog('info', m, actual) + '\n');
   },
   debug: (meta: Record<string, unknown> | string, msg?: string) => {
     if (!shouldLog('debug')) return;
     const actual = typeof meta === 'string' ? {} : meta;
-    const m = typeof meta === 'string' ? meta : msg ?? '';
+    const m = typeof meta === 'string' ? meta : (msg ?? '');
     process.stderr.write(formatLog('debug', m, actual) + '\n');
   },
 };

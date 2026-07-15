@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Database from 'better-sqlite3';
 import { mkdtempSync } from 'node:fs';
-import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { sql, query, queryOne, execute } from '../../../src/util/sql.js';
@@ -57,11 +56,7 @@ test('query with extra params', () => {
   try {
     db.prepare('INSERT INTO test (id, name, value) VALUES (1, ?, ?)').run('x', 100);
 
-    const rows = query<{ id: number }>(
-      db,
-      sql`SELECT * FROM test WHERE id = ?`,
-      1,
-    );
+    const rows = query<{ id: number }>(db, sql`SELECT * FROM test WHERE id = ?`, 1);
 
     assert.equal(rows.length, 1);
   } finally {
@@ -96,7 +91,10 @@ test('queryOne returns undefined when no match', () => {
 test('execute inserts and returns changes', () => {
   const db = makeDb();
   try {
-    const result = execute(db, sql`INSERT INTO test (id, name, value) VALUES (${1}, ${'x'}, ${100})`);
+    const result = execute(
+      db,
+      sql`INSERT INTO test (id, name, value) VALUES (${1}, ${'x'}, ${100})`,
+    );
     assert.equal(result.changes, 1);
     assert.ok(result.lastInsertRowid);
   } finally {

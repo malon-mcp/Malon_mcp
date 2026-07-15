@@ -40,7 +40,7 @@ cost:
 
 log:
   level: info
-  file: ""
+  file: ''
 
 telemetry:
   enabled: false

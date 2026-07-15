@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, mkdir, rm, readFile, realpath } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { writeMemory, getMemory } from '../../dist/memory/ledger.js';
@@ -29,10 +29,7 @@ test('writeMemory writes inside memory directory', async () => {
 test('writeMemory rejects unknown category', async () => {
   const root = await makeRepoWithMemory();
   try {
-    await assert.rejects(
-      () => writeMemory(root, 'unknown', 'Heading', 'Body'),
-      MalonError,
-    );
+    await assert.rejects(() => writeMemory(root, 'unknown', 'Heading', 'Body'), MalonError);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

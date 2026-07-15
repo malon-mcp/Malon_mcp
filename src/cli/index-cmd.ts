@@ -17,7 +17,10 @@ export async function indexCommand(repoRoot: string): Promise<void> {
   logger.info({}, 'index_command_start');
 
   const { files_indexed, files_skipped } = await indexRepo(repoRoot);
-  logger.info({ filesIndexed: files_indexed, filesSkipped: files_skipped }, 'index_command_complete');
+  logger.info(
+    { filesIndexed: files_indexed, filesSkipped: files_skipped },
+    'index_command_complete',
+  );
 
   try {
     const { stdout } = await execFileP('git', ['rev-parse', 'HEAD'], {

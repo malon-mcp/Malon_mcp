@@ -27,5 +27,5 @@ paths = [
   ".gitleaks.toml",
   "SECURITY.md",
   "AGENTS.md",
-  "test/**",
+  "(?i)test[\\\\/].*",
 ]

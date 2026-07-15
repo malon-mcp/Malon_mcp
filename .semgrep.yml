@@ -1,7 +1,7 @@
 rules:
   - id: no-shell-string
     pattern: exec($CMD)
-    message: "Use execFile with argument arrays — never build a shell command string"
+    message: 'Use execFile with argument arrays — never build a shell command string'
     languages: [ts, js]
     severity: ERROR
 
@@ -11,40 +11,40 @@ rules:
           - pattern: "SELECT ... '${$VAL}'"
           - pattern: "INSERT ... '${$VAL}'"
           - pattern: "WHERE ... '${$VAL}'"
-    message: "Use parameterized queries, not string concatenation into SQL"
+    message: 'Use parameterized queries, not string concatenation into SQL'
     languages: [ts, js]
     severity: ERROR
 
   - id: no-path-join-with-user-input
-    pattern: "path.join($ROOT, $INPUT)"
-    message: "Paths from user/model input must go through resolveInside() for boundary checking"
+    pattern: 'path.join($ROOT, $INPUT)'
+    message: 'Paths from user/model input must go through resolveInside() for boundary checking'
     languages: [ts, js]
     severity: WARNING
 
   - id: no-process-env-leak
-    pattern: "process.env"
-    message: "Do not pass process.env directly to child processes; use MINIMAL_ENV with allow-list"
+    pattern: 'process.env'
+    message: 'Do not pass process.env directly to child processes; use MINIMAL_ENV with allow-list'
     languages: [ts, js]
     severity: WARNING
 
   - id: no-console-log
-    pattern: "console.log(...)"
-    message: "Use the logger utility, not console.log. Log to stderr as structured JSON."
+    pattern: 'console.log(...)'
+    message: 'Use the logger utility, not console.log. Log to stderr as structured JSON.'
     languages: [ts, js]
     severity: WARNING
     paths:
       exclude:
-        - "test/**/*.ts"
-        - "scripts/**/*.js"
+        - 'test/**/*.ts'
+        - 'scripts/**/*.js'
 
   - id: no-eval
-    pattern: "eval(...)"
-    message: "eval is banned — treat all external input as untrusted data, never as code"
+    pattern: 'eval(...)'
+    message: 'eval is banned — treat all external input as untrusted data, never as code'
     languages: [ts, js]
     severity: ERROR
 
   - id: no-innerHTML
-    pattern: "innerHTML"
-    message: "innerHTML is a vector for XSS; use textContent or framework auto-escaping"
+    pattern: 'innerHTML'
+    message: 'innerHTML is a vector for XSS; use textContent or framework auto-escaping'
     languages: [ts, js]
     severity: ERROR

@@ -26,7 +26,11 @@ export function graphWalk(db: Database.Database, symbol: string, depth = 1): Gra
     if (visited.has(current.symbol)) continue;
     visited.add(current.symbol);
 
-    const rows = stmt.all(current.symbol) as Array<{ name: string; file_path: string | null; kind: string }>;
+    const rows = stmt.all(current.symbol) as {
+      name: string;
+      file_path: string | null;
+      kind: string;
+    }[];
     for (const row of rows) {
       results.push({ symbol: row.name, file_path: row.file_path, kind: row.kind });
       if (current.depth < depth) {

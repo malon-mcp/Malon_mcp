@@ -1,6 +1,12 @@
 import { test, describe, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { initParser, parseFileContent, detectLanguage, getSupportedLanguages, isLanguageSupported } from '../../../dist/index/parser.js';
+import {
+  initParser,
+  parseFileContent,
+  detectLanguage,
+  getSupportedLanguages,
+  isLanguageSupported,
+} from '../../../dist/index/parser.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -44,12 +50,20 @@ describe('parser', () => {
       assert.equal(detectLanguage('/path/to/file.py'), 'python');
     });
 
-    test('returns null for unsupported extensions', () => {
-      assert.equal(detectLanguage('/path/to/file.rb'), null);
+    test('detects Go from .go', () => {
+      assert.equal(detectLanguage('/path/to/file.go'), 'go');
     });
 
-    test('returns null for unsupported extensions .go', () => {
-      assert.equal(detectLanguage('/path/to/file.go'), null);
+    test('detects Rust from .rs', () => {
+      assert.equal(detectLanguage('/path/to/file.rs'), 'rust');
+    });
+
+    test('detects Java from .java', () => {
+      assert.equal(detectLanguage('/path/to/file.java'), 'java');
+    });
+
+    test('returns null for unsupported extensions', () => {
+      assert.equal(detectLanguage('/path/to/file.rb'), null);
     });
   });
 
@@ -59,6 +73,9 @@ describe('parser', () => {
       assert.ok(langs.includes('.ts'));
       assert.ok(langs.includes('.js'));
       assert.ok(langs.includes('.py'));
+      assert.ok(langs.includes('.go'));
+      assert.ok(langs.includes('.rs'));
+      assert.ok(langs.includes('.java'));
     });
   });
 
@@ -88,38 +105,38 @@ describe('parser', () => {
 
       assert.equal(symbols.length, 8);
 
-      const interfaceSym = symbols.find(s => s.name === 'User');
+      const interfaceSym = symbols.find((s) => s.name === 'User');
       assert.ok(interfaceSym);
       assert.equal(interfaceSym.kind, 'interface');
       assert.equal(interfaceSym.start_line, 1);
       assert.equal(interfaceSym.end_line, 4);
 
-      const functionSym = symbols.find(s => s.name === 'greet' && s.kind === 'function');
+      const functionSym = symbols.find((s) => s.name === 'greet' && s.kind === 'function');
       assert.ok(functionSym);
       assert.equal(functionSym.kind, 'function');
       assert.equal(functionSym.start_line, 6);
       assert.equal(functionSym.end_line, 8);
 
-      const classSym = symbols.find(s => s.name === 'Greeter');
+      const classSym = symbols.find((s) => s.name === 'Greeter');
       assert.ok(classSym);
       assert.equal(classSym.kind, 'class');
 
-      const constructorSym = symbols.find(s => s.name === 'constructor');
+      const constructorSym = symbols.find((s) => s.name === 'constructor');
       assert.ok(constructorSym);
       assert.equal(constructorSym.kind, 'method');
 
-      const methodSym = symbols.find(s => s.name === 'greet' && s.kind === 'method');
+      const methodSym = symbols.find((s) => s.name === 'greet' && s.kind === 'method');
       assert.ok(methodSym);
 
-      const typeAliasSym = symbols.find(s => s.name === 'Result');
+      const typeAliasSym = symbols.find((s) => s.name === 'Result');
       assert.ok(typeAliasSym);
       assert.equal(typeAliasSym.kind, 'type_alias');
 
-      const constSym = symbols.find(s => s.name === 'PI');
+      const constSym = symbols.find((s) => s.name === 'PI');
       assert.ok(constSym);
       assert.equal(constSym.kind, 'const');
 
-      const internalSym = symbols.find(s => s.name === 'internalHelper');
+      const internalSym = symbols.find((s) => s.name === 'internalHelper');
       assert.ok(internalSym);
       assert.equal(internalSym.kind, 'function');
 
@@ -134,13 +151,13 @@ describe('parser', () => {
       const symbols = result.symbols;
       const edges = result.edges;
 
-      assert.ok(symbols.some(s => s.name === 'run' && s.kind === 'function'));
+      assert.ok(symbols.some((s) => s.name === 'run' && s.kind === 'function'));
 
       assert.ok(edges.length > 0);
-      assert.ok(edges.some(e => e.to_symbol_name === './sample.js'));
-      assert.ok(edges.some(e => e.to_symbol_name === 'node:fs'));
-      assert.ok(edges.some(e => e.to_symbol_name === 'greet'));
-      assert.ok(edges.some(e => e.to_symbol_name === 'User'));
+      assert.ok(edges.some((e) => e.to_symbol_name === './sample.js'));
+      assert.ok(edges.some((e) => e.to_symbol_name === 'node:fs'));
+      assert.ok(edges.some((e) => e.to_symbol_name === 'greet'));
+      assert.ok(edges.some((e) => e.to_symbol_name === 'User'));
     });
 
     test('parses empty file gracefully', () => {
@@ -148,6 +165,63 @@ describe('parser', () => {
       assert.ok(result);
       assert.equal(result.symbols.length, 0);
       assert.equal(result.edges.length, 0);
+    });
+
+    test('parses sample.go and extracts symbols', () => {
+      const code = readFixture('sample.go.txt');
+      const result = parseFileContent(path.join(FIXTURES_DIR, 'sample.go'), code);
+      assert.ok(result);
+
+      const symbols = result.symbols;
+      const edges = result.edges;
+
+      const symbolInfos = symbols.map((s) => `${s.name}:${s.kind}:L${s.start_line}`);
+      assert.ok(
+        symbols.some((s) => s.name === 'User' && s.kind === 'class'),
+        `No User class in symbols: ${JSON.stringify(symbolInfos)}`,
+      );
+      assert.ok(symbols.some((s) => s.name === 'greet' && s.kind === 'function'));
+      assert.ok(symbols.some((s) => s.name === 'Greeter' && s.kind === 'interface'));
+      assert.ok(symbols.some((s) => s.name === 'GreeterImpl' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'Greet' && s.kind === 'method'));
+      assert.ok(symbols.some((s) => s.name === 'greeting' && s.kind === 'const'));
+      assert.ok(symbols.some((s) => s.name === 'version' && s.kind === 'const'));
+      assert.ok(edges.some((e) => e.kind === 'imports'));
+    });
+
+    test('parses sample.rs and extracts symbols', () => {
+      const code = readFixture('sample.rs.txt');
+      const result = parseFileContent(path.join(FIXTURES_DIR, 'sample.rs'), code);
+      assert.ok(result);
+
+      const symbols = result.symbols;
+      assert.ok(symbols.some((s) => s.name === 'User' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'Greeter' && s.kind === 'interface'));
+      assert.ok(symbols.some((s) => s.name === 'greet' && s.kind === 'function'));
+      assert.ok(symbols.some((s) => s.name === 'GreeterImpl' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'PI' && s.kind === 'const'));
+      assert.ok(symbols.some((s) => s.name === 'VERSION' && s.kind === 'const'));
+      assert.ok(symbols.some((s) => s.name === 'Result' && s.kind === 'type_alias'));
+      assert.ok(symbols.some((s) => s.name === 'internal_helper' && s.kind === 'function'));
+      assert.ok(symbols.some((s) => s.name === 'Status' && s.kind === 'class'));
+    });
+
+    test('parses sample.java and extracts symbols', () => {
+      const code = readFixture('sample.java.txt');
+      const result = parseFileContent(path.join(FIXTURES_DIR, 'sample.java'), code);
+      assert.ok(result);
+
+      const symbols = result.symbols;
+      const edges = result.edges;
+      assert.ok(symbols.some((s) => s.name === 'Greeter' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'Greeter' && s.kind === 'method'));
+      assert.ok(symbols.some((s) => s.name === 'greet' && s.kind === 'method'));
+      assert.ok(symbols.some((s) => s.name === 'Named' && s.kind === 'interface'));
+      assert.ok(symbols.some((s) => s.name === 'Status' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'Point' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'Utils' && s.kind === 'class'));
+      assert.ok(symbols.some((s) => s.name === 'PI' && s.kind === 'const'));
+      assert.ok(edges.some((e) => e.kind === 'imports'));
     });
 
     test('parses file with syntax errors gracefully', () => {

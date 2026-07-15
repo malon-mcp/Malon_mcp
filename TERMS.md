@@ -2,7 +2,7 @@
 
 **Malon MCP Server**
 
-*Version 0.0.1 — In Development*
+_Version 0.0.1 — In Development_
 
 > **These terms are a skeleton placeholder and have not been reviewed by legal counsel.**
 > They must be reviewed and finalized by a qualified lawyer before the first real user.
@@ -27,6 +27,7 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 ## 5. Data Handling
 
 The Software runs locally on your machine. By default, no data leaves your machine except:
+
 - Short code spans sent to the configured LLM provider when you explicitly call `malon_search`.
 - Telemetry data if you explicitly opt in (`MALON_TELEMETRY=1` or `config.yml: telemetry.enabled: true`).
 
@@ -38,4 +39,4 @@ These terms may be updated. Continued use after changes constitutes acceptance o
 
 ---
 
-*Contact: security@yourdomain*
+_Contact: security@yourdomain_

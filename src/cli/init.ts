@@ -107,7 +107,10 @@ telemetry:
   enabled: false
 `;
 
-export async function initCommand(repoRoot: string, options?: { incremental?: boolean }): Promise<void> {
+export async function initCommand(
+  repoRoot: string,
+  options?: { incremental?: boolean },
+): Promise<void> {
   const malonDir = path.join(repoRoot, '.malon');
   const configPath = path.join(malonDir, 'config.yml');
   const dbPath = path.join(malonDir, 'index.db');

@@ -1,0 +1,31 @@
+package com.example;
+
+import java.util.List;
+import java.util.ArrayList;
+
+public class Greeter {
+    private String prefix;
+
+    public Greeter(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String greet(String name) {
+        return prefix + ", " + name + "!";
+    }
+}
+
+interface Named {
+    String getName();
+}
+
+enum Status {
+    ACTIVE,
+    INACTIVE
+}
+
+record Point(int x, int y) {}
+
+class Utils {
+    public static final double PI = 3.14159;
+}

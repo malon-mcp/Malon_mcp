@@ -50,10 +50,7 @@ export function execute(
   return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
 }
 
-export function transaction<T>(
-  db: DatabaseType,
-  fn: () => T,
-): T {
+export function transaction<T>(db: DatabaseType, fn: () => T): T {
   const txn = db.transaction(fn);
   return txn();
 }

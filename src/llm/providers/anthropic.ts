@@ -26,7 +26,7 @@ export async function callAnthropic(opts: LlmCallOptions): Promise<LlmResponse> 
   }
 
   const data = (await response.json()) as {
-    content: Array<{ type: string; text: string }>;
+    content: { type: string; text: string }[];
     usage: { input_tokens: number; output_tokens: number };
   };
 
