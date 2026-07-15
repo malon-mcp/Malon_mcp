@@ -1,0 +1,85 @@
+{
+  "date": "2026-07-15",
+  "results": [
+    {
+      "name": "fullIndex_50files",
+      "actualMs": 1101.39,
+      "budgetMs": 5000,
+      "passed": true,
+      "iterations": 1,
+      "timestamp": "2026-07-15T17:31:47.391Z"
+    },
+    {
+      "name": "fullIndex_100files",
+      "actualMs": 1976.42,
+      "budgetMs": 15000,
+      "passed": true,
+      "iterations": 1,
+      "timestamp": "2026-07-15T17:31:49.561Z"
+    },
+    {
+      "name": "incrementalIndex_10files",
+      "actualMs": 186.8,
+      "budgetMs": 3000,
+      "passed": true,
+      "iterations": 1,
+      "timestamp": "2026-07-15T17:31:50.877Z"
+    },
+    {
+      "name": "statusResponse",
+      "actualMs": 0.21,
+      "budgetMs": 100,
+      "passed": true,
+      "iterations": 5,
+      "timestamp": "2026-07-15T17:31:51.995Z"
+    },
+    {
+      "name": "fts5Query",
+      "actualMs": 0.09,
+      "budgetMs": 100,
+      "passed": true,
+      "iterations": 15,
+      "timestamp": "2026-07-15T17:31:53.095Z"
+    },
+    {
+      "name": "pathResolution",
+      "actualMs": 1.01,
+      "budgetMs": 5,
+      "passed": true,
+      "iterations": 100,
+      "timestamp": "2026-07-15T17:31:53.261Z"
+    }
+  ],
+  "summary": {
+    "fullIndex_50files": {
+      "actualMs": 1101.39,
+      "budgetMs": 5000,
+      "passed": true
+    },
+    "fullIndex_100files": {
+      "actualMs": 1976.42,
+      "budgetMs": 15000,
+      "passed": true
+    },
+    "incrementalIndex_10files": {
+      "actualMs": 186.8,
+      "budgetMs": 3000,
+      "passed": true
+    },
+    "statusResponse": {
+      "actualMs": 0.21,
+      "budgetMs": 100,
+      "passed": true
+    },
+    "fts5Query": {
+      "actualMs": 0.09,
+      "budgetMs": 100,
+      "passed": true
+    },
+    "pathResolution": {
+      "actualMs": 1.01,
+      "budgetMs": 5,
+      "passed": true
+    }
+  }
+}

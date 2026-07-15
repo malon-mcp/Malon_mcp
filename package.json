@@ -19,6 +19,7 @@
     "coverage": "c8 --reporter=text --reporter=lcov npm test",
     "start": "node dist/server/index.js",
     "dev": "tsx watch src/server/index.ts",
+    "bench": "tsx --test --test-reporter=spec \"test/bench/**/*.bench.ts\"",
     "prepare": "node scripts/check-no-install-scripts.js"
   },
   "dependencies": {

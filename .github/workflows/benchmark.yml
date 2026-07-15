@@ -1,0 +1,69 @@
+name: Nightly Benchmarks
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run benchmarks
+        run: npm run bench
+        timeout-minutes: 10
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/history/
+      - name: Check for regressions
+        run: |
+          $results = Get-ChildItem -Path benchmarks/history/ -Filter *.json | Sort-Object Name -Descending | Select-Object -First 2
+          if ($results.Count -eq 2) {
+            $prev = Get-Content $results[1].FullName | ConvertFrom-Json
+            $curr = Get-Content $results[0].FullName | ConvertFrom-Json
+            $failures = @()
+            foreach ($key in $curr.summary.PSObject.Properties.Name) {
+              $cur = $curr.summary.$key
+              $old = $prev.summary.$key
+              if (-not $cur.passed) {
+                $failures += "$key: FAILED (exceeded budget)"
+              } elseif ($old -and $cur.actualMs -gt ($old.actualMs * 1.2)) {
+                $failures += "$key: REGRESSION ($($cur.actualMs)ms vs $($old.actualMs)ms, +$([math]::Round(($cur.actualMs/$old.actualMs - 1) * 100))%)"
+              }
+            }
+            if ($failures.Count -gt 0) {
+              Write-Host "## Regression Report" -ForegroundColor Red
+              $failures | ForEach-Object { Write-Host "⚠ $_" }
+              Write-Host "This is informational only — benchmark regressions do not block CI."
+            } else {
+              Write-Host "✅ All benchmarks within 120% of previous run."
+            }
+          } else {
+            Write-Host "Not enough history for regression comparison (need 2+ runs)."
+          }
+        shell: pwsh
+        continue-on-error: true
+      - name: Post benchmark summary
+        run: |
+          $latest = Get-ChildItem -Path benchmarks/history/ -Filter *.json | Sort-Object Name -Descending | Select-Object -First 1
+          if ($latest) {
+            $data = Get-Content $latest.FullName | ConvertFrom-Json
+            Write-Host "## Benchmark Results for $($data.date)" -ForegroundColor Cyan
+            foreach ($key in $data.summary.PSObject.Properties.Name) {
+              $val = $data.summary.$key
+              $icon = if ($val.passed) { "✅" } else { "❌" }
+              Write-Host "$icon $key: $($val.actualMs)ms (budget: $($val.budgetMs)ms)"
+            }
+          }
+        shell: pwsh
