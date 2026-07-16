@@ -2,7 +2,8 @@
 # Reference: RFC 9116
 
 # Contact information
-Contact: mailto:security@yourdomain
+# IMPORTANT: Replace with your real security contact before launch
+# Contact: mailto:security@yourdomain
 
 # Encryption for sensitive reports (optional)
 # Encryption: https://yourdomain/.well-known/pgp-key.txt

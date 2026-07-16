@@ -48,7 +48,7 @@ By default, no other data leaves your machine. Telemetry is opt-in
 
 - Provider: set at `config.yml: search.provider` (default: `gemini`)
 - Model: set at `config.yml: search.model` (default: `gemini-2.0-flash`)
-- Data retention: [Anthropic API Terms](https://www.anthropic.com/legal/commercial-terms) — API data is not used for training or retained beyond 30 days unless otherwise agreed.
+- Data retention: [Gemini API Data Governance](https://cloud.google.com/terms/service-terms#11-data-protection) — API data is not used for training and is subject to Google's data processing terms.
 
 ## What we never do
 
@@ -64,6 +64,5 @@ By default, no other data leaves your machine. Telemetry is opt-in
 ## Reporting a vulnerability
 
 See `.well-known/security.txt` for our security contact and disclosure
-policy. Email `security@yourdomain`. We acknowledge within 24 hours and
-triage within 72 hours. We follow coordinated disclosure with a 90-day
-default window.
+policy. We acknowledge within 24 hours and triage within 72 hours.
+We follow coordinated disclosure with a 90-day default window.

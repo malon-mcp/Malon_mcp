@@ -58,9 +58,11 @@ Your Coding Agent ──→ malon_search("where is JWT validated?")
 ```bash
 malon init               # Initialize .malon/ dir, config, and full index
 malon init --incremental # Incremental re-index (git diff based)
+malon init --local       # Initialize in local-only mode (Ollama auto-detect)
 malon index              # Full re-index (re-parses all supported files)
 malon status             # Show session stats, spend, rot flags, tokens saved, memory summary
 malon reset              # Delete index.db, usage.log, and .malon.lock
+malon local-check        # Test and report local LLM (Ollama) availability
 ```
 
 ## Tools
@@ -73,7 +75,8 @@ Malon exposes MCP tools your coding agent can call:
 | `malon_memory_get`   | Retrieve relevant memory entries from the ledger (decisions, conventions, sessions)      |
 | `malon_memory_write` | Write a new entry to the memory ledger. Scoped to `.malon/memory/`. Rejects secrets.     |
 | `malon_status`       | Current session status: spend, tokens used, tokens saved vs. baseline, rot flags         |
-| `malon_checkpoint`   | (Coming soon) — Explicitly trigger a rot checkpoint, saving session progress             |
+| `malon_checkpoint`   | Explicitly trigger a rot checkpoint, saving session progress to the memory ledger        |
+| `malon_admin`        | Manage API keys (generate, list, revoke) — requires admin authentication                 |
 
 ## For your AGENTS.md
 

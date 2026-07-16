@@ -3,52 +3,41 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v*'
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npx tsc --noEmit
-      - run: npm run test:security
-      - run: npm test
-      - run: npm run build
+  lint:
+    uses: ./.github/workflows/ci.yml
 
-  publish:
-    needs: check
+  release:
+    needs: [lint]
     runs-on: ubuntu-latest
-    environment: release
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-
+          cache: npm
       - run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Publish with provenance
+      - run: npm run build
+      - name: Generate provenance
+        run: npm pack --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm
         run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # OIDC Trusted Publishing replaces long-lived tokens
-
-      - name: Verify install
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Smoke test install
         run: |
           npm pack
-          tar -xzf malon-*.tgz
+          tar -xf malon-*.tgz
           node -e "const p = require('./package.json'); console.log('version:', p.version);"
