@@ -89,10 +89,25 @@ export interface LogConfig {
   file: string;
 }
 
+export interface RetentionConfig {
+  usage_log_max_age_days: number;
+  usage_log_max_size_mb: number;
+  auto_prune_on_start: boolean;
+}
+
+export interface AuthConfig {
+  session_ttl_minutes: number;
+  api_key_prefix: string;
+  max_api_keys_per_user: number;
+  mfa_enforced: boolean;
+}
+
 export interface MalonConfig {
   pricing: PricingConfig;
   search: SearchConfig;
   cost: CostConfig;
   log: LogConfig;
+  retention: RetentionConfig;
+  auth: AuthConfig;
   telemetry: { enabled: boolean };
 }

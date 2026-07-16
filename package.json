@@ -1,6 +1,6 @@
 {
   "name": "malon",
-  "version": "0.0.1",
+  "version": "0.6.0",
   "description": "Local-first MCP server for search isolation, memory ledger, context rot detection, and cost governance",
   "type": "module",
   "main": "dist/server/index.js",

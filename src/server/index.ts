@@ -10,11 +10,13 @@ import { initIndex, getDb } from '../index/index.js';
 import { applyConfig } from '../util/config.js';
 import { startWatcher, stopWatcher } from '../index/watcher.js';
 import { tryAcquireLock, releaseLock } from '../util/lock.js';
+import { getRetentionConfig, pruneUsageLog } from '../governor/retention.js';
+import { initAuthSchema } from '../auth/store.js';
 
 const server = new McpServer(
   {
     name: 'malon',
-    version: '0.0.1',
+    version: '0.6.0',
   },
   {
     capabilities: {
@@ -93,6 +95,32 @@ server.tool(
   },
 );
 
+server.tool(
+  'malon_admin',
+  'Manage API keys for the Malon server (generate-key, list-keys, revoke-key)',
+  {
+    operation: z
+      .enum(['generate-key', 'list-keys', 'revoke-key'])
+      .describe('Admin operation to perform'),
+    label: z
+      .string()
+      .min(1)
+      .max(80)
+      .optional()
+      .describe('Label for the API key (required for generate-key)'),
+    role: z
+      .enum(['admin', 'operator', 'service', 'user', 'viewer'])
+      .optional()
+      .describe('Role for the API key (default: service, used with generate-key)'),
+    key_id: z.string().optional().describe('Key ID to revoke (required for revoke-key)'),
+  },
+  async (args) => {
+    logger.debug({ operation: args.operation }, 'malon_admin_called');
+    const result = await route('malon_admin', args as Record<string, unknown>);
+    return result;
+  },
+);
+
 async function main(): Promise<void> {
   const repoRoot = process.cwd();
   const malonDir = path.join(repoRoot, '.malon');
@@ -130,8 +158,17 @@ async function main(): Promise<void> {
     }
   }
 
+  initAuthSchema(getDb());
+
   await applyConfig(repoRoot);
   initRouter(repoRoot, getDb());
+
+  const retentionCfg = getRetentionConfig();
+  if (retentionCfg.auto_prune_on_start) {
+    pruneUsageLog(repoRoot).catch((err) => {
+      logger.warn({ err }, 'auto_prune_failed');
+    });
+  }
 
   const gitDir = path.join(repoRoot, '.git');
   try {
@@ -150,7 +187,7 @@ async function main(): Promise<void> {
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
 
-  logger.info({ version: '0.0.1', cwd: repoRoot, session_id: sessionId }, 'malon_server_start');
+  logger.info({ version: '0.6.0', cwd: repoRoot, session_id: sessionId }, 'malon_server_start');
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

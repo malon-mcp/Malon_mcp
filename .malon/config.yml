@@ -28,6 +28,11 @@ cost:
     tokens_per_file_read: 4000
     avg_tokens_per_file: 350
 
+retention:
+  usage_log_max_age_days: 30
+  usage_log_max_size_mb: 100
+  auto_prune_on_start: true
+
 log:
   level: info
   file: ''

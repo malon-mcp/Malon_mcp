@@ -43,6 +43,11 @@ rate_limits:
   max_tokens_per_session: 500000
   window_ms: 60000
 
+retention:
+  usage_log_max_age_days: 30
+  usage_log_max_size_mb: 100
+  auto_prune_on_start: true
+
 log:
   level: info
   file: ''

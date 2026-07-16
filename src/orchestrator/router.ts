@@ -11,6 +11,7 @@ import { computeTokensSaved, recordUsage, getSessionStats } from '../governor/to
 import { checkRot, recordFileRead, createCheckpoint } from '../governor/rot.js';
 import { createStableItem, createDynamicItem, orderContext } from './cache-ordering.js';
 import { getSearchConfig } from '../util/config.js';
+import { handleAdmin } from '../auth/admin-handler.js';
 
 const sessionId = crypto.randomUUID();
 
@@ -255,6 +256,28 @@ const HANDLERS: Record<string, ToolHandler> = {
         },
       ],
     };
+  },
+
+  malon_admin: async (input) => {
+    if (!db) {
+      return { isError: true, content: [{ type: 'text', text: 'Database not initialized' }] };
+    }
+    try {
+      const adminInput = input as unknown as import('../auth/admin-handler.js').AdminInput;
+      const result = handleAdmin(db, adminInput);
+      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+    } catch (err) {
+      logger.warn({ err, session_id: sessionId }, 'admin_handler_error');
+      return {
+        isError: true,
+        content: [
+          {
+            type: 'text',
+            text: `Admin operation failed: ${err instanceof Error ? err.message : String(err)}`,
+          },
+        ],
+      };
+    }
   },
 
   malon_status: async () => {

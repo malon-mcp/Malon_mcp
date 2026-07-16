@@ -3,16 +3,18 @@ import { initCommand } from './init.js';
 import { statusCommand } from './status.js';
 import { resetCommand } from './reset.js';
 import { indexCommand } from './index-cmd.js';
+import { cleanCommand } from './clean.js';
 
 const USAGE = `Usage: malon <command>
 
 Commands:
-  init          Initialize .malon/ directory structure, config, and index
+  init              Initialize .malon/ directory structure, config, and index
   init --incremental  Incremental re-index (uses git diff since last indexed sha)
-  index         Full re-index of the repository
-  status        Show current session status, spend, and rot flags
-  reset         Delete index.db, usage.log, and lock file
-  help          Show this help message
+  index             Full re-index of the repository
+  status            Show current session status, spend, and rot flags
+  clean             Data retention and cleanup operations (use 'malon clean help' for details)
+  reset             Delete index.db, usage.log, and lock file
+  help              Show this help message
 `;
 
 async function main(): Promise<void> {
@@ -47,6 +49,12 @@ async function main(): Promise<void> {
     case 'reset': {
       const repoRoot = process.cwd();
       await resetCommand(repoRoot);
+      break;
+    }
+
+    case 'clean': {
+      const repoRoot = process.cwd();
+      await cleanCommand(repoRoot, process.argv.slice(3));
       break;
     }
 

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { logger } from './log.js';
 import { setRateLimitConfig } from '../governor/rate-limiter.js';
+import { setRetentionConfig } from '../governor/retention.js';
 import { validatePricingAge } from '../governor/pricing.js';
 import type { PricingEntry } from '../governor/pricing.js';
 
@@ -19,9 +20,16 @@ export interface SearchConfig {
   max_output_bytes?: number | undefined;
 }
 
+interface RetentionCfg {
+  usage_log_max_age_days?: number;
+  usage_log_max_size_mb?: number;
+  auto_prune_on_start?: boolean;
+}
+
 export interface NestedConfig {
   rate_limits?: Record<string, unknown>;
   search?: Record<string, unknown>;
+  retention?: Record<string, unknown>;
   pricing?: {
     last_verified?: string;
     providers?: Record<string, Record<string, PricingEntry>>;
@@ -64,6 +72,19 @@ export async function applyConfig(repoRoot: string): Promise<void> {
         max_output_bytes: searchConfig['max_output_bytes'] as number | undefined,
       };
       logger.debug({ search: cachedSearchConfig }, 'search_config_loaded');
+    }
+
+    const retention = config['retention'];
+    if (retention) {
+      const cfg: RetentionCfg = {};
+      const days = retention['usage_log_max_age_days'];
+      if (days !== undefined) cfg.usage_log_max_age_days = days as number;
+      const size = retention['usage_log_max_size_mb'];
+      if (size !== undefined) cfg.usage_log_max_size_mb = size as number;
+      const prune = retention['auto_prune_on_start'];
+      if (prune !== undefined) cfg.auto_prune_on_start = prune as boolean;
+      setRetentionConfig(cfg);
+      logger.debug({ retention }, 'retention_config_loaded');
     }
 
     const pricing = config['pricing'];
