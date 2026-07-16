@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.1] - 2026-07-16
+
+### Added
+
+- Phase 7: Enterprise Readiness
+  - Local-model (Ollama) first-class toggle (`malon init --local`, `malon local-check`)
+  - `docs/ACCESS_CONTROL_POLICY.md` — 5 RBAC roles, auth mechanisms, review cadence
+  - `docs/CHANGE_MANAGEMENT_PROCESS.md` — C0-C3 classification, CRB, rollback
+  - `docs/VENDOR_SECURITY_QUESTIONNAIRE.md` — 12-section pre-drafted answers
+  - `docs/SOC2_READINESS.md` — 50+ TSC criteria, 7 gaps, evidence framework
+  - Gemini provider support (default provider)
+
+### Fixed
+
+- CI/CD workflow: fixed `release.yml` to be self-contained, added `workflow_call` trigger
+- SECURITY.md: data retention link matches Gemini default provider
+- README: documented `malon_admin` tool, unmarked `malon_checkpoint` as shipped
+
 ## [0.6.0] - 2026-07-16
 
 ### Added
