@@ -3,7 +3,38 @@
 Malon reads your codebase to index it. This page tells you exactly what
 happens to that data.
 
-## What leaves your machine
+## Zero-trust deployment: local-only mode (recommended for sensitive code)
+
+Malon can run entirely offline using Ollama with local open-weight models.
+**In this mode, no data — not a single token — ever leaves your machine.**
+
+```bash
+# Quick start:
+malon local-check          # Verify Ollama is running
+malon init --local         # Auto-configure for local-only mode
+```
+
+```yaml
+# Equivalent manual config.yml:
+search:
+  provider: ollama
+  model: llama3.1-8b
+```
+
+Check the local status at any time:
+
+```bash
+malon status              # Shows "local_mode: true" when active
+```
+
+**Recommended models:** `llama3.1-8b` (default, 8GB RAM), `phi3:14b` (quality/size sweet spot),
+`mistral-7b` (fast), `qwen2.5-coder:7b` (code-focused). Run `malon local-check` for a full list.
+
+**Enterprise trust guarantee:** When Ollama is configured as the search provider, Malon
+makes no outbound network calls except for telemetry (which is opt-in and disabled by default).
+Your code, queries, and index stay on your machine.
+
+## Cloud mode (default)
 
 By default, the **Search Subagent** sends short code spans to your
 configured LLM provider when answering a `malon_search` query. The spans
@@ -15,21 +46,9 @@ By default, no other data leaves your machine. Telemetry is opt-in
 
 ## Default LLM provider and retention
 
-- Provider: set at `config.yml: search.provider` (default: `anthropic`)
-- Model: set at `config.yml: search.model` (default: `claude-haiku-4-5`)
+- Provider: set at `config.yml: search.provider` (default: `gemini`)
+- Model: set at `config.yml: search.model` (default: `gemini-2.0-flash`)
 - Data retention: [Anthropic API Terms](https://www.anthropic.com/legal/commercial-terms) — API data is not used for training or retained beyond 30 days unless otherwise agreed.
-
-## Local-only option
-
-You can switch the Search Subagent to a local open-weight model via
-Ollama. With that setting, no code leaves your machine at any point.
-
-```yaml
-# config.yml
-search:
-  provider: ollama
-  model: llama3.1-8b
-```
 
 ## What we never do
 

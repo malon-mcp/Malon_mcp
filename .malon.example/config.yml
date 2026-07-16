@@ -1,5 +1,13 @@
 # Malon — example configuration
 # Copy this to .malon/config.yml after running `malon init`
+#
+# MODES:
+#   Cloud mode (default): uses remote LLM API providers (Gemini, Anthropic, OpenAI)
+#   Local-only mode:      `malon init --local` — uses Ollama, no data leaves your machine
+#
+# For local-only mode, run: `malon init --local`
+# For local-only with a specific model: `malon init --local --model llama3.1-8b`
+# To verify Ollama is running: `malon local-check`
 
 pricing:
   last_verified: 2026-07-14
@@ -16,10 +24,14 @@ pricing:
       llama3.1-8b:
         input_per_million: 0
         output_per_million: 0
+    gemini:
+      gemini-2.0-flash:
+        input_per_million: 0
+        output_per_million: 0
 
 search:
-  provider: anthropic
-  model: claude-haiku-4-5
+  provider: gemini
+  model: gemini-2.0-flash
   subagent_timeout_ms: 8000
   max_rounds: 4
   max_output_bytes: 32768

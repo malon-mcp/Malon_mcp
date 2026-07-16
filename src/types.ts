@@ -54,6 +54,8 @@ export interface StatusResult {
   rot_flag: string | null;
   last_index_sha: string;
   uptime_ms: number;
+  local_mode: boolean;
+  local_model?: string | undefined;
 }
 
 export interface PricingEntry {

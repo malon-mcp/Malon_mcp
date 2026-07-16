@@ -7,6 +7,7 @@ import { logger } from '../util/log.js';
 import { initIndex, indexRepo, closeDb, getDb } from '../index/index.js';
 import { incrementalIndex } from '../index/incremental.js';
 import { recordUsage } from '../governor/token-accounting.js';
+import { checkOllamaHealth, ensureModelAvailable, generateLocalConfig } from './ollama.js';
 
 const execFileP = promisify(execFile);
 
@@ -68,6 +69,10 @@ const DEFAULT_CONFIG = `# Malon configuration
 pricing:
   last_verified: '2026-07-14'
   providers:
+    gemini:
+      gemini-2.0-flash:
+        input_per_million: 0
+        output_per_million: 0
     anthropic:
       claude-haiku-4-5:
         input_per_million: 1.00
@@ -82,8 +87,8 @@ pricing:
         output_per_million: 0
 
 search:
-  provider: anthropic
-  model: claude-haiku-4-5
+  provider: gemini
+  model: gemini-2.0-flash
   subagent_timeout_ms: 8000
   max_rounds: 4
   max_output_bytes: 32768
@@ -109,13 +114,80 @@ telemetry:
 
 export async function initCommand(
   repoRoot: string,
-  options?: { incremental?: boolean },
+  options?: { incremental?: boolean; local?: boolean; model?: string | undefined },
 ): Promise<void> {
   const malonDir = path.join(repoRoot, '.malon');
   const configPath = path.join(malonDir, 'config.yml');
   const dbPath = path.join(malonDir, 'index.db');
 
   await fs.mkdir(path.join(malonDir, 'memory', 'sessions'), { recursive: true });
+
+  if (options?.local) {
+    const localModel = options.model ?? 'llama3.1-8b';
+    logger.info({ model: localModel }, 'init_local_mode_start');
+
+    const health = await checkOllamaHealth();
+    if (!health.available) {
+      logger.warn({ url: health.url, error: health.error }, 'init_ollama_not_available_proceeding');
+      process.stderr.write(
+        `Warning: Ollama not detected at ${health.url}.\n` +
+          `  ${health.error ?? 'Connection refused'}\n` +
+          `  Install Ollama from https://ollama.ai and pull a model:\n` +
+          `    ollama pull ${localModel}\n` +
+          `  Then re-run: malon init --local\n` +
+          `  Proceeding with local configuration anyway.\n`,
+      );
+    } else {
+      logger.info(
+        { version: health.version, models: health.models?.length },
+        'init_ollama_available',
+      );
+
+      const modelCheck = await ensureModelAvailable(localModel);
+      if (!modelCheck.available) {
+        process.stderr.write(
+          `Warning: Model "${localModel}" not available and could not be pulled.\n` +
+            `  ${modelCheck.error ?? 'Unknown error'}\n` +
+            `  Run: ollama pull ${localModel}\n` +
+            `  Proceeding with local configuration anyway.\n`,
+        );
+      } else if (modelCheck.pulled) {
+        process.stdout.write(`Model "${localModel}" pulled successfully.\n`);
+      } else {
+        process.stdout.write(`Model "${localModel}" is available.\n`);
+      }
+    }
+
+    const localConfig = generateLocalConfig(localModel);
+    await fs.writeFile(configPath, localConfig, 'utf8');
+    logger.info({ path: configPath, mode: 'local', model: localModel }, 'config_created_local');
+
+    await installGitHooks(repoRoot);
+    initIndex(dbPath, repoRoot);
+    recordUsage({
+      timestamp: new Date().toISOString(),
+      session_id: 'init',
+      provider: 'ollama',
+      model: localModel,
+      query: 'init',
+      query_hash: '',
+      input_tokens: 0,
+      output_tokens: 0,
+      estimated_cost_usd: 0,
+      round: 0,
+      latency_ms: 0,
+    });
+
+    process.stdout.write(
+      `Malon initialized in LOCAL-ONLY mode.\n` +
+        `  Provider: Ollama\n` +
+        `  Model: ${localModel}\n` +
+        `  URL: ${health.url}\n` +
+        `  No data leaves your machine.\n\n`,
+    );
+
+    return;
+  }
 
   try {
     await fs.access(configPath);

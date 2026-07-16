@@ -4,6 +4,7 @@ import path from 'node:path';
 import { getSessionStats } from '../governor/token-accounting.js';
 import { checkRot } from '../governor/rot.js';
 import { logger } from '../util/log.js';
+import { getSearchConfig } from '../util/config.js';
 import type { StatusResult } from '../types.js';
 
 const startTime = Date.now();
@@ -38,6 +39,9 @@ export async function statusCommand(repoRoot?: string): Promise<StatusResult> {
   const stats = getSessionStats();
   const rotFlag = checkRot(stats.tokens_used);
 
+  const searchCfg = getSearchConfig();
+  const isLocal = searchCfg.provider === 'ollama';
+
   const result: StatusResult = {
     session_id: currentSessionId,
     spend_usd: stats.spend_usd,
@@ -46,6 +50,8 @@ export async function statusCommand(repoRoot?: string): Promise<StatusResult> {
     rot_flag: rotFlag,
     last_index_sha: repoRoot ? readIndexSha(repoRoot) : '',
     uptime_ms: Date.now() - startTime,
+    local_mode: isLocal,
+    local_model: isLocal ? searchCfg.model : undefined,
   };
 
   logger.debug({ ...result }, 'status');
