@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sanitizeFts5Query } from '../../../dist/search/fts5-sanitize.js';
+import { sanitizeFts5Query } from '../../../src/search/fts5-sanitize.js';
 
 test('basic query passes through', () => {
   assert.equal(sanitizeFts5Query('jwt validation'), 'jwt validation');

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir, rm, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { safeRead, resolveInside } from '../../../dist/util/paths.js';
+import { safeRead, resolveInside } from '../../../src/util/paths.js';
 
 async function makeRepo() {
   const root = await mkdtemp(path.join(os.tmpdir(), 'malon-paths-'));

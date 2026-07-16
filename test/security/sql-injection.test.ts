@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sanitizeFts5Query } from '../../dist/search/fts5-sanitize.js';
-import { SanitizedFts5Error } from '../../dist/util/errors.js';
+import { sanitizeFts5Query } from '../../src/search/fts5-sanitize.js';
+import { SanitizedFts5Error } from '../../src/util/errors.js';
 
 test('sanitizeFts5Query strips FTS5 operators', () => {
   assert.equal(sanitizeFts5Query('(test)'), 'test');

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scanForSecrets } from '../../dist/memory/secret-scan.js';
-import { SecretLeakSuspectedError } from '../../dist/util/errors.js';
+import { scanForSecrets } from '../../src/memory/secret-scan.js';
+import { SecretLeakSuspectedError } from '../../src/util/errors.js';
 
 test('rejects Anthropic API key', () => {
   assert.throws(

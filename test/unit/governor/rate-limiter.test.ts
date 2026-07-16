@@ -6,8 +6,8 @@ import {
   resetRateLimitState,
   getRateLimitState,
   setRateLimitConfig,
-} from '../../../dist/governor/rate-limiter.js';
-import { MalonError } from '../../../dist/types.js';
+} from '../../../src/governor/rate-limiter.js';
+import { MalonError } from '../../../src/types.js';
 
 test('checkRateLimit allows calls under the limit', () => {
   resetRateLimitState();

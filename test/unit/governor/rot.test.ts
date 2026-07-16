@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setCeiling, recordFileRead, checkRot, resetRotState } from '../../../dist/governor/rot.js';
+import { setCeiling, recordFileRead, checkRot, resetRotState } from '../../../src/governor/rot.js';
 
 test('setCeiling sets appropriate ceiling based on repo size', () => {
   // 0.4 * 300_000 = 120_000, min(120_000, 120_000) = 120_000, max(32_000, 120_000) = 120_000

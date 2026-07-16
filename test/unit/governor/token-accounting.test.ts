@@ -5,7 +5,7 @@ import {
   getSessionStats,
   computeTokensSaved,
   getUsageRecords,
-} from '../../../dist/governor/token-accounting.js';
+} from '../../../src/governor/token-accounting.js';
 
 test('recordUsage and getSessionStats work correctly', () => {
   while (getUsageRecords().length > 0) {

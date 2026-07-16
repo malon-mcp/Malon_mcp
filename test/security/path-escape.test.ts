@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, symlink, mkdir, rm, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { resolveInside } from '../../dist/util/paths.js';
-import { PathEscapeError } from '../../dist/util/errors.js';
+import { resolveInside } from '../../src/util/paths.js';
+import { PathEscapeError } from '../../src/util/errors.js';
 
 const isWindows = os.platform() === 'win32';
 

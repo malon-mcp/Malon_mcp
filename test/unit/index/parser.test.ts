@@ -6,7 +6,7 @@ import {
   detectLanguage,
   getSupportedLanguages,
   isLanguageSupported,
-} from '../../../dist/index/parser.js';
+} from '../../../src/index/parser.js';
 import fs from 'node:fs';
 import path from 'node:path';
 

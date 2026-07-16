@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { writeMemory, getMemory } from '../../dist/memory/ledger.js';
-import { MalonError } from '../../dist/types.js';
+import { writeMemory, getMemory } from '../../src/memory/ledger.js';
+import { MalonError } from '../../src/types.js';
 
 async function makeRepoWithMemory() {
   const root = await mkdtemp(path.join(os.tmpdir(), 'malon-memory-'));

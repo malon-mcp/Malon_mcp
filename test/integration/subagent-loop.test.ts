@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { initIndex, indexFile, closeDb } from '../../dist/index/index.js';
-import { initParser } from '../../dist/index/parser.js';
+import { initIndex, indexFile, closeDb } from '../../src/index/index.js';
+import { initParser } from '../../src/index/parser.js';
 
 let repoRoot = '';
 let dbPath = '';
@@ -36,7 +36,7 @@ after(async () => {
 });
 
 test('subagent falls back to FTS5 when LLM call fails (no API key)', async () => {
-  const { searchSubagent } = await import('../../dist/search/subagent.js');
+  const { searchSubagent } = await import('../../src/search/subagent.js');
 
   const result = await searchSubagent('validateToken function', {
     provider: 'anthropic',
@@ -52,7 +52,7 @@ test('subagent falls back to FTS5 when LLM call fails (no API key)', async () =>
 });
 
 test('subagent handles empty query gracefully', async () => {
-  const { searchSubagent } = await import('../../dist/search/subagent.js');
+  const { searchSubagent } = await import('../../src/search/subagent.js');
 
   const result = await searchSubagent('', {
     provider: 'anthropic',
@@ -67,7 +67,7 @@ test('subagent handles empty query gracefully', async () => {
 });
 
 test('subagent handles binary query input', async () => {
-  const { searchSubagent } = await import('../../dist/search/subagent.js');
+  const { searchSubagent } = await import('../../src/search/subagent.js');
 
   const result = await searchSubagent('\x00\x01\x02', {
     provider: 'anthropic',
