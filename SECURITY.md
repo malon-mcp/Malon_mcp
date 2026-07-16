@@ -63,6 +63,6 @@ By default, no other data leaves your machine. Telemetry is opt-in
 
 ## Reporting a vulnerability
 
-See `.well-known/security.txt` for our security contact and disclosure
-policy. We acknowledge within 24 hours and triage within 72 hours.
-We follow coordinated disclosure with a 90-day default window.
+Email **malonmcp@gmail.com**. We acknowledge within 24 hours and triage
+within 72 hours. We follow coordinated disclosure with a 90-day default
+window.
