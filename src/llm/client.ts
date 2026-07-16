@@ -27,6 +27,10 @@ export async function callLlm(opts: LlmCallOptions): Promise<LlmResponse> {
       const { callOllama } = await import('./providers/ollama.js');
       return callOllama(opts);
     }
+    case 'gemini': {
+      const { callGemini } = await import('./providers/gemini.js');
+      return callGemini(opts);
+    }
     default:
       throw new Error(`Unknown LLM provider: ${opts.provider}`);
   }

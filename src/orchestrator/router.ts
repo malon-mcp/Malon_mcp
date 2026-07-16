@@ -25,8 +25,8 @@ let autoInjectSent = false;
 function getSubagentConfig() {
   const cfg = getSearchConfig();
   return {
-    provider: cfg.provider ?? 'anthropic',
-    model: cfg.model ?? 'claude-haiku-4-5',
+    provider: cfg.provider ?? 'gemini',
+    model: cfg.model ?? 'gemini-2.0-flash',
     maxRounds: Math.max(1, Math.min(6, cfg.max_rounds ?? 4)),
     timeoutMs: cfg.subagent_timeout_ms ?? 8_000,
     maxOutputBytes: cfg.max_output_bytes ?? 32_768,
