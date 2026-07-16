@@ -47,7 +47,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/malon-mcp/Malon_mcp.git"
+    "url": "git+https://github.com/malon-mcp/Malon_mcp.git"
   },
   "homepage": "https://github.com/malon-mcp/Malon_mcp",
   "bugs": {
