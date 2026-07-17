@@ -5,7 +5,6 @@ on:
     branches: [master]
   pull_request:
   workflow_call:
-    branches: [master]
 
 jobs:
   lint:
@@ -14,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx eslint .
@@ -26,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx tsc -p tsconfig.json --noEmit
@@ -37,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx tsx --test "test/unit/**/*.test.ts"
@@ -48,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx tsx --test "test/integration/**/*.test.ts"
@@ -59,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx tsx --test "test/security/**/*.test.ts"
@@ -70,7 +69,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - uses: semgrep/semgrep-action@v1
@@ -86,7 +85,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - name: TruffleHog
@@ -98,7 +97,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx license-checker --summary --production
@@ -110,7 +109,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npm run build
@@ -121,7 +120,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npx c8 --reporter=text --reporter=lcov npx tsx --test "test/**/*.test.ts"
