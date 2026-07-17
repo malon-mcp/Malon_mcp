@@ -1,0 +1,85 @@
+{
+  "date": "2026-07-16",
+  "results": [
+    {
+      "name": "fullIndex_50files",
+      "actualMs": 1922.36,
+      "budgetMs": 5000,
+      "passed": true,
+      "iterations": 1,
+      "timestamp": "2026-07-16T15:10:00.181Z"
+    },
+    {
+      "name": "fullIndex_100files",
+      "actualMs": 2939.71,
+      "budgetMs": 15000,
+      "passed": true,
+      "iterations": 1,
+      "timestamp": "2026-07-16T15:10:03.424Z"
+    },
+    {
+      "name": "incrementalIndex_10files",
+      "actualMs": 269.05,
+      "budgetMs": 3000,
+      "passed": true,
+      "iterations": 1,
+      "timestamp": "2026-07-16T15:10:05.160Z"
+    },
+    {
+      "name": "statusResponse",
+      "actualMs": 0.26,
+      "budgetMs": 100,
+      "passed": true,
+      "iterations": 5,
+      "timestamp": "2026-07-16T15:10:06.658Z"
+    },
+    {
+      "name": "fts5Query",
+      "actualMs": 0.23,
+      "budgetMs": 100,
+      "passed": true,
+      "iterations": 15,
+      "timestamp": "2026-07-16T15:10:08.222Z"
+    },
+    {
+      "name": "pathResolution",
+      "actualMs": 1.77,
+      "budgetMs": 5,
+      "passed": true,
+      "iterations": 100,
+      "timestamp": "2026-07-16T15:10:08.509Z"
+    }
+  ],
+  "summary": {
+    "fullIndex_50files": {
+      "actualMs": 1922.36,
+      "budgetMs": 5000,
+      "passed": true
+    },
+    "fullIndex_100files": {
+      "actualMs": 2939.71,
+      "budgetMs": 15000,
+      "passed": true
+    },
+    "incrementalIndex_10files": {
+      "actualMs": 269.05,
+      "budgetMs": 3000,
+      "passed": true
+    },
+    "statusResponse": {
+      "actualMs": 0.26,
+      "budgetMs": 100,
+      "passed": true
+    },
+    "fts5Query": {
+      "actualMs": 0.23,
+      "budgetMs": 100,
+      "passed": true
+    },
+    "pathResolution": {
+      "actualMs": 1.77,
+      "budgetMs": 5,
+      "passed": true
+    }
+  }
+}
