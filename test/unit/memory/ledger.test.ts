@@ -13,7 +13,7 @@ async function makeRepoWithMemory() {
 test('getMemorySummary returns summary string when memory exists', async () => {
   const root = await makeRepoWithMemory();
   try {
-    const { writeMemory, getMemorySummary } = await import('../../../dist/memory/ledger.js');
+    const { writeMemory, getMemorySummary } = await import('../../../src/memory/ledger.js');
     await writeMemory(root, 'decisions', 'Use SQLite', 'Decision body');
     await writeMemory(root, 'conventions', 'Naming Pattern', 'Use camelCase');
 
@@ -28,7 +28,7 @@ test('getMemorySummary returns summary string when memory exists', async () => {
 test('getMemorySummary returns fallback when no memory', async () => {
   const root = await makeRepoWithMemory();
   try {
-    const { getMemorySummary } = await import('../../../dist/memory/ledger.js');
+    const { getMemorySummary } = await import('../../../src/memory/ledger.js');
     const summary = await getMemorySummary(root);
     assert.ok(summary.includes('No memory entries'));
   } finally {
@@ -39,7 +39,7 @@ test('getMemorySummary returns fallback when no memory', async () => {
 test('getMemory with query filters results', async () => {
   const root = await makeRepoWithMemory();
   try {
-    const { writeMemory, getMemory } = await import('../../../dist/memory/ledger.js');
+    const { writeMemory, getMemory } = await import('../../../src/memory/ledger.js');
     await writeMemory(root, 'decisions', 'SQLite Database', 'Use SQLite for storage');
     await writeMemory(root, 'conventions', 'Naming Conventions', 'Use camelCase naming');
 

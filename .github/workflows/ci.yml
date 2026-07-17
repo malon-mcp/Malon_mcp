@@ -75,7 +75,6 @@ jobs:
       - uses: semgrep/semgrep-action@v1
         with:
           config: p/security-audit p/typescript
-          auditOn: push
 
   secrets:
     runs-on: ubuntu-latest
@@ -89,7 +88,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: TruffleHog
-        run: npx trufflehog --no-update git file://. --since-commit HEAD~1
+        uses: docker://trufflesecurity/trufflehog:latest
+        with:
+          args: git file://. --since-commit HEAD~1
 
   license-check:
     runs-on: ubuntu-latest

@@ -9,7 +9,7 @@ test('createCheckpoint writes a session file', async () => {
   await mkdir(path.join(root, '.malon', 'memory', 'sessions'), { recursive: true });
 
   try {
-    const { createCheckpoint, resetRotState } = await import('../../../dist/governor/rot.js');
+    const { createCheckpoint, resetRotState } = await import('../../../src/governor/rot.js');
     resetRotState();
 
     const result = await createCheckpoint(root, 'context_size', 50000);
@@ -32,7 +32,7 @@ test('createCheckpoint cools down between calls', async () => {
   await mkdir(path.join(root, '.malon', 'memory', 'sessions'), { recursive: true });
 
   try {
-    const { createCheckpoint, resetRotState } = await import('../../../dist/governor/rot.js');
+    const { createCheckpoint, resetRotState } = await import('../../../src/governor/rot.js');
     resetRotState();
 
     await createCheckpoint(root, 'context_size', 50000);
