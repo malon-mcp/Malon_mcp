@@ -25,9 +25,7 @@ jobs:
       - run: npm ci
       - run: npx tsc -p tsconfig.json --noEmit
       - run: npm run build
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --provenance
       - name: Smoke test install
         run: |
           npm pack --dry-run 2>&1 | head -5
