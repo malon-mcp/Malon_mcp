@@ -42,6 +42,13 @@ scripts/
 # Skills lock
 skills-lock.json
 
+# Planning docs
+tasks/
+
+# Stray files in repo root
+sanga.pptx
+slide2.txt
+
 # Editor/OS
 .vscode/
 .idea/
