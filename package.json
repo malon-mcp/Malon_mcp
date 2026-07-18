@@ -1,6 +1,6 @@
 {
   "name": "malon",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "Local-first MCP server for search isolation, memory ledger, context rot detection, and cost governance",
   "type": "module",
   "main": "dist/server/index.js",
@@ -40,6 +40,7 @@
     "c8": "^10.1.0",
     "eslint": "^9.0.0",
     "gitleaks": "^1.0.0",
+    "pptxgenjs": "^4.0.1",
     "prettier": "^3.4.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
