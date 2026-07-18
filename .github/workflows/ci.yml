@@ -39,8 +39,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npm rebuild better-sqlite3
-        continue-on-error: true
+      - name: Rebuild native bindings
+        run: npm rebuild better-sqlite3
+        env:
+          npm_config_ignore_scripts: 'false'
       - run: npx tsx --test "test/unit/**/*.test.ts"
 
   integration:
@@ -52,8 +54,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npm rebuild better-sqlite3
-        continue-on-error: true
+      - name: Rebuild native bindings
+        run: npm rebuild better-sqlite3
+        env:
+          npm_config_ignore_scripts: 'false'
       - run: npx tsx --test "test/integration/**/*.test.ts"
 
   security:
@@ -128,8 +132,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npm rebuild better-sqlite3
-        continue-on-error: true
+      - name: Rebuild native bindings
+        run: npm rebuild better-sqlite3
+        env:
+          npm_config_ignore_scripts: 'false'
       - run: npx c8 --reporter=text --reporter=lcov npx tsx --test "test/**/*.test.ts"
       - uses: davelosert/vitest-coverage-report-action@v2
         if: github.event_name == 'pull_request'
