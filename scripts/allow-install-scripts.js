@@ -5,6 +5,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const ALLOW_LIST = [
   'better-sqlite3', // native build (C++ addon via node-gyp)
@@ -19,6 +20,43 @@ for (const pkg of ALLOW_LIST) {
   const pkgJson = JSON.parse(readFileSync(resolve(pkgDir, 'package.json'), 'utf8'));
   if (pkgJson.scripts?.install || pkgJson.scripts?.postinstall || pkgJson.scripts?.preinstall) {
     console.log(`Allowing install scripts for: ${pkg}`);
-    execFileSync('npm', ['rebuild', pkg], { cwd: installDir, stdio: 'inherit' });
+    try {
+      execFileSync('npm', ['rebuild', pkg], {
+        cwd: installDir,
+        stdio: 'inherit',
+        env: { ...process.env },
+      });
+    } catch {
+      // Fallback: use prebuild-install to download prebuilt binary
+      const prebuildCmd = resolve(
+        installDir,
+        'node_modules',
+        '.pnpm',
+        'prebuild-install',
+        'bin',
+        'prebuild-install.js',
+      );
+      const args = [
+        '--runtime',
+        'node',
+        '--target',
+        process.versions.node,
+        '--platform',
+        process.platform,
+        '--arch',
+        process.arch,
+      ];
+      if (existsSync(prebuildCmd)) {
+        execFileSync(process.execPath, [prebuildCmd, ...args], {
+          cwd: pkgDir,
+          stdio: 'inherit',
+        });
+      } else {
+        // Run prebuild-install directly (resolved via import.meta)
+        const prebuildUrl = import.meta.resolve('prebuild-install/bin.js');
+        const prebuildPath = fileURLToPath(prebuildUrl);
+        execFileSync(process.execPath, [prebuildPath, ...args], { cwd: pkgDir, stdio: 'inherit' });
+      }
+    }
   }
 }

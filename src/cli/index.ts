@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { logger, setLogLevel } from '../util/log.js';
 import { initCommand } from './init.js';
 import { statusCommand } from './status.js';

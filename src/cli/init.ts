@@ -245,4 +245,15 @@ export async function initCommand(
   }
 
   closeDb();
+
+  process.stdout.write(
+    `Malon initialized.\n` +
+      `  Location: ${malonDir}\n` +
+      `  Files indexed: ${filesIndexed}\n` +
+      `  Config: config.yml\n` +
+      `  Index: index.db\n` +
+      `  Memory: memory/\n` +
+      `\nYour coding agent can now use malon_search, malon_memory_get, etc.\n` +
+      `Run 'malon status' to see session stats.\n`,
+  );
 }
