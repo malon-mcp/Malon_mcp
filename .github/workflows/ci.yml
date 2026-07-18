@@ -39,6 +39,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Rebuild native bindings
+        run: npm rebuild better-sqlite3
+        env:
+          npm_config_ignore_scripts: 'false'
       - run: npx tsx --test "test/unit/**/*.test.ts"
 
   integration:
@@ -50,6 +54,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Rebuild native bindings
+        run: npm rebuild better-sqlite3
+        env:
+          npm_config_ignore_scripts: 'false'
       - run: npx tsx --test "test/integration/**/*.test.ts"
 
   security:
@@ -75,7 +83,6 @@ jobs:
       - uses: semgrep/semgrep-action@v1
         with:
           config: p/security-audit p/typescript
-          auditOn: push
 
   secrets:
     runs-on: ubuntu-latest
@@ -89,7 +96,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: TruffleHog
-        run: npx trufflehog --no-update git file://. --since-commit HEAD~1
+        uses: docker://trufflesecurity/trufflehog:latest
+        with:
+          args: git file://. --since-commit HEAD~1
 
   license-check:
     runs-on: ubuntu-latest
@@ -123,6 +132,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Rebuild native bindings
+        run: npm rebuild better-sqlite3
+        env:
+          npm_config_ignore_scripts: 'false'
       - run: npx c8 --reporter=text --reporter=lcov npx tsx --test "test/**/*.test.ts"
-      - uses: davelosert/vitest-coverage-report-action@v2
-        if: github.event_name == 'pull_request'

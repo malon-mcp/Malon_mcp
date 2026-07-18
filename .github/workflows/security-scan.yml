@@ -18,7 +18,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: TruffleHog full history scan
-        run: npx trufflehog --no-update git file://. --fail
+        uses: docker://trufflesecurity/trufflehog:latest
+        with:
+          args: git file://. --fail
         continue-on-error: true
 
   license-audit:
