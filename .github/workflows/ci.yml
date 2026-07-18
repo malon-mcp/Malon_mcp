@@ -137,5 +137,3 @@ jobs:
         env:
           npm_config_ignore_scripts: 'false'
       - run: npx c8 --reporter=text --reporter=lcov npx tsx --test "test/**/*.test.ts"
-      - uses: davelosert/vitest-coverage-report-action@v2
-        if: github.event_name == 'pull_request'
