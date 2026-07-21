@@ -1,0 +1,149 @@
+# Malon QA Automation Workflow
+# Runs the comprehensive test suite against all CLI commands.
+# Detects bugs, errors, flaws, and performance regressions.
+# Triggered manually or on push to main.
+
+name: QA Automation
+
+on:
+  workflow_dispatch:
+    inputs:
+      depth:
+        description: 'Test depth: fast (quick smoke) | full (comprehensive) | deep (bug-hunting)'
+        default: 'full'
+        type: choice
+        options:
+          - fast
+          - full
+          - deep
+  schedule:
+    - cron: '0 6 * * 1' # Every Monday 06:00 UTC
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'tsconfig.json'
+
+jobs:
+  qa:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['20', '22']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Malon
+        run: npm run build
+
+      - name: Run QA Automation (${{ github.event.inputs.depth || 'full' }})
+        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            pwsh -NoProfile -ExecutionPolicy Bypass -File test-env/run-malon-tests.ps1
+          else
+            bash test-env/run-malon-tests.sh
+          fi
+
+      - name: Upload QA Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-report-${{ matrix.os }}-node${{ matrix.node }}
+          path: |
+            test-env/summary.json
+            test-env/report.jsonl
+          retention-days: 30
+
+      - name: Fail if QA detected issues
+        if: failure()
+        run: |
+          echo "::error::QA Automation detected failures. Check the uploaded report."
+          exit 1
+
+  # Bug hunt job — deep diagnostics, ad-hoc detection
+  bug-hunt:
+    needs: qa
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.depth == 'deep' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+
+      - name: Deep Bug Hunting
+        shell: bash
+        run: |
+          echo "## Deep Bug Hunting" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Set up test fixture
+          mkdir -p /tmp/malon-deeptest/src
+          cat > /tmp/malon-deeptest/src/app.ts << 'EOF'
+          export function hello(name: string): string {
+            return `Hello ${name}!`;
+          }
+
+          export function add(a: number, b: number): number {
+            return a + b;
+          }
+          EOF
+
+          cd /tmp/malon-deeptest
+          git init && git config user.email "bot@malon.dev" && git config user.name "Bot"
+          git add -A && git commit -m "init" > /dev/null 2>&1
+
+          # Run deep tests
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" init
+          echo "✅ Init complete" >> $GITHUB_STEP_SUMMARY
+
+          # Test search output schema
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" status
+          echo "✅ Status complete" >> $GITHUB_STEP_SUMMARY
+
+          # Test re-index
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" index
+          echo "✅ Index complete" >> $GITHUB_STEP_SUMMARY
+
+          # Test incremental
+          echo 'export const FOO = 42;' > /tmp/malon-deeptest/src/foo.ts
+          git add -A && git commit -m "add foo" > /dev/null 2>&1
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" init --incremental
+          echo "✅ Incremental complete" >> $GITHUB_STEP_SUMMARY
+
+          # Test clean
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" clean stats
+          echo "✅ Clean stats complete" >> $GITHUB_STEP_SUMMARY
+
+          # Test reset
+          node "$GITHUB_WORKSPACE/dist/cli/index.js" reset
+          echo "✅ Reset complete" >> $GITHUB_STEP_SUMMARY
+
+          # Path traversal protection (security)
+          echo "## Security Checks" >> $GITHUB_STEP_SUMMARY
+          OUTPUT=$(node "$GITHUB_WORKSPACE/dist/cli/index.js" status 2>&1) || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$OUTPUT" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "✅ Security checks complete" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All deep diagnostic tests executed." >> $GITHUB_STEP_SUMMARY

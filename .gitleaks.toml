@@ -28,4 +28,5 @@ paths = [
   "SECURITY.md",
   "AGENTS.md",
   "(?i)test[\\\\/].*",
+  "(?i)\\.recon[\\\\/].*",
 ]

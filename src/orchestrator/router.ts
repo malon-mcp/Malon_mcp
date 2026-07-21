@@ -4,6 +4,7 @@ import type Database from 'better-sqlite3';
 import { MalonError } from '../types.js';
 import { logger } from '../util/log.js';
 import { searchSubagent } from '../search/subagent.js';
+import type { SubagentResult } from '../search/subagent.js';
 import { getMemory, writeMemory, getMemorySummary, reindexMemoryFts5 } from '../memory/ledger.js';
 import { statusCommand, setStatusSessionId } from '../cli/status.js';
 import { checkRateLimit, recordTokensForRateLimit } from '../governor/rate-limiter.js';
@@ -14,6 +15,15 @@ import { getSearchConfig } from '../util/config.js';
 import { handleAdmin } from '../auth/admin-handler.js';
 
 const sessionId = crypto.randomUUID();
+
+// Search result cache (LRU with TTL)
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_ENTRIES = 50;
+interface CacheEntry {
+  result: SubagentResult;
+  timestamp: number;
+}
+const searchCache = new Map<string, CacheEntry>();
 
 type ToolHandler = (input: Record<string, unknown>) => Promise<CallToolResult>;
 
@@ -91,6 +101,100 @@ function getDb(): Database.Database {
   return db;
 }
 
+async function buildSearchResponse(
+  query: string,
+  queryHash: string,
+  result: SubagentResult,
+  startTime: number,
+  subagentCfg: { provider: string; model: string },
+  fromCache: boolean,
+): Promise<CallToolResult> {
+  if (!fromCache) {
+    recordTokensForRateLimit(result.inputTokens + result.outputTokens);
+  }
+
+  const shadowInputTokens = Math.max(result.spans.length, 1) * 4000;
+  const tokensSaved = fromCache ? 0 : computeTokensSaved(result.inputTokens, shadowInputTokens);
+  const estimatedCost = estimateCost(
+    subagentCfg.provider,
+    subagentCfg.model,
+    result.inputTokens,
+    result.outputTokens,
+  );
+
+  if (!fromCache) {
+    recordUsage({
+      timestamp: new Date().toISOString(),
+      session_id: sessionId,
+      provider: subagentCfg.provider,
+      model: subagentCfg.model,
+      query,
+      query_hash: queryHash,
+      input_tokens: result.inputTokens,
+      output_tokens: result.outputTokens,
+      estimated_cost_usd: estimatedCost,
+      round: result.roundsUsed,
+      latency_ms: Date.now() - startTime,
+    });
+    for (const span of result.spans) {
+      recordFileRead(span.file_path);
+    }
+  }
+
+  const stats = getSessionStats();
+  const rotFlag = checkRot(stats.tokens_used);
+  let checkpointPath: string | null = null;
+  if (rotFlag) {
+    checkpointPath = await createCheckpoint(getRepoRoot(), rotFlag, stats.tokens_used);
+  }
+
+  const contextItems = [];
+  if (!autoInjectSent && memoryContext && memoryContext !== 'No memory entries yet.') {
+    contextItems.push(createStableItem('memory_summary', memoryContext, 0));
+    autoInjectSent = true;
+  }
+  contextItems.push(createDynamicItem('rot_flag', JSON.stringify(rotFlag), 0));
+  contextItems.push(createDynamicItem('spans', JSON.stringify(result.spans), 1));
+  contextItems.push(createStableItem('not_found', JSON.stringify(result.not_found), 10));
+  contextItems.push(
+    createDynamicItem(
+      'metadata',
+      JSON.stringify({
+        input_tokens: result.inputTokens,
+        output_tokens: result.outputTokens,
+        rounds_used: result.roundsUsed,
+        tokens_saved: tokensSaved,
+        from_cache: fromCache,
+      }),
+      5,
+    ),
+  );
+
+  const ordered = orderContext(contextItems);
+  const orderedEnvelope: Record<string, unknown> = {};
+  for (const item of ordered.items) {
+    orderedEnvelope[item.key] = item.content;
+  }
+  if (rotFlag) {
+    orderedEnvelope['rot_flag'] = rotFlag;
+    orderedEnvelope['message'] =
+      `Context quality is dropping (${rotFlag}). Progress saved at ${checkpointPath ?? 'N/A'}. Recommend starting a fresh session.`;
+  }
+
+  logger.debug(
+    {
+      tokensSaved,
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+      estimatedCost,
+      rotFlag,
+      fromCache,
+    },
+    'search_response',
+  );
+  return { content: [{ type: 'text', text: JSON.stringify(orderedEnvelope) }] };
+}
+
 const HANDLERS: Record<string, ToolHandler> = {
   malon_search: async (input) => {
     const query = input['query'] as string | undefined;
@@ -111,86 +215,31 @@ const HANDLERS: Record<string, ToolHandler> = {
       throw err;
     }
     const startTime = Date.now();
-    const subagentCfg = getSubagentConfig();
-    const result = await searchSubagent(query, subagentCfg);
-    recordTokensForRateLimit(result.inputTokens + result.outputTokens);
-
-    const shadowInputTokens = Math.max(result.spans.length, 1) * 4000;
-    const tokensSaved = computeTokensSaved(result.inputTokens, shadowInputTokens);
     const queryHash = crypto.createHash('sha256').update(query).digest('hex');
-    const estimatedCost = estimateCost(
-      subagentCfg.provider,
-      subagentCfg.model,
-      result.inputTokens,
-      result.outputTokens,
-    );
-    recordUsage({
-      timestamp: new Date().toISOString(),
-      session_id: sessionId,
-      provider: subagentCfg.provider,
-      model: subagentCfg.model,
-      query,
-      query_hash: queryHash,
-      input_tokens: result.inputTokens,
-      output_tokens: result.outputTokens,
-      estimated_cost_usd: estimatedCost,
-      round: result.roundsUsed,
-      latency_ms: Date.now() - startTime,
-    });
-    for (const span of result.spans) {
-      recordFileRead(span.file_path);
-    }
-    const stats = getSessionStats();
-    const rotFlag = checkRot(stats.tokens_used);
-    let checkpointPath: string | null = null;
-    if (rotFlag) {
-      checkpointPath = await createCheckpoint(getRepoRoot(), rotFlag, stats.tokens_used);
+    const subagentCfg = getSubagentConfig();
+
+    const cached = searchCache.get(queryHash);
+    if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+      logger.debug({ queryHash }, 'search_cache_hit');
+      return buildSearchResponse(query, queryHash, cached.result, startTime, subagentCfg, true);
     }
 
-    const contextItems = [];
-    if (!autoInjectSent && memoryContext && memoryContext !== 'No memory entries yet.') {
-      contextItems.push(createStableItem('memory_summary', memoryContext, 0));
-      autoInjectSent = true;
-    }
-    contextItems.push(createDynamicItem('rot_flag', JSON.stringify(rotFlag), 0));
-    const spansContent = JSON.stringify(result.spans);
-    contextItems.push(createDynamicItem('spans', spansContent, 1));
-    contextItems.push(createStableItem('not_found', JSON.stringify(result.not_found), 10));
-    contextItems.push(
-      createDynamicItem(
-        'metadata',
-        JSON.stringify({
-          input_tokens: result.inputTokens,
-          output_tokens: result.outputTokens,
-          rounds_used: result.roundsUsed,
-          tokens_saved: tokensSaved,
-        }),
-        5,
-      ),
-    );
+    const result = await searchSubagent(query, subagentCfg);
 
-    const ordered = orderContext(contextItems);
-    const orderedEnvelope: Record<string, unknown> = {};
-    for (const item of ordered.items) {
-      orderedEnvelope[item.key] = item.content;
+    if (searchCache.size >= MAX_CACHE_ENTRIES) {
+      let oldestKey: string | null = null;
+      let oldestTime = Infinity;
+      for (const [k, v] of searchCache) {
+        if (v.timestamp < oldestTime) {
+          oldestTime = v.timestamp;
+          oldestKey = k;
+        }
+      }
+      if (oldestKey) searchCache.delete(oldestKey);
     }
-    if (rotFlag) {
-      orderedEnvelope['rot_flag'] = rotFlag;
-      orderedEnvelope['message'] =
-        `Context quality is dropping (${rotFlag}). Progress saved at ${checkpointPath ?? 'N/A'}. Recommend starting a fresh session.`;
-    }
+    searchCache.set(queryHash, { result, timestamp: Date.now() });
 
-    logger.debug(
-      {
-        tokensSaved,
-        inputTokens: result.inputTokens,
-        outputTokens: result.outputTokens,
-        estimatedCost,
-        rotFlag,
-      },
-      'tokens_saved_computed',
-    );
-    return { content: [{ type: 'text', text: JSON.stringify(orderedEnvelope) }] };
+    return buildSearchResponse(query, queryHash, result, startTime, subagentCfg, false);
   },
 
   malon_memory_get: async (input) => {

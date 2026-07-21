@@ -1,24 +1,21 @@
-# Malon configuration
+# Malon configuration — local-only mode (auto-configured)
+local:
+  enabled: true
+  model: llama3.1-8b
+  ollama_url: http://127.0.0.1:11434
+
 pricing:
-  last_verified: '2026-07-14'
+  last_verified: '2026-07-20'
   providers:
-    anthropic:
-      claude-haiku-4-5:
-        input_per_million: 1.00
-        output_per_million: 5.00
-    openai:
-      gpt-4o-mini:
-        input_per_million: 0.15
-        output_per_million: 0.60
     ollama:
       llama3.1-8b:
         input_per_million: 0
         output_per_million: 0
 
 search:
-  provider: anthropic
-  model: claude-haiku-4-5
-  subagent_timeout_ms: 8000
+  provider: ollama
+  model: llama3.1-8b
+  subagent_timeout_ms: 15000
   max_rounds: 4
   max_output_bytes: 32768
 
@@ -28,10 +25,10 @@ cost:
     tokens_per_file_read: 4000
     avg_tokens_per_file: 350
 
-retention:
-  usage_log_max_age_days: 30
-  usage_log_max_size_mb: 100
-  auto_prune_on_start: true
+rate_limits:
+  max_calls_per_session: 100
+  max_tokens_per_session: 500000
+  window_ms: 60000
 
 log:
   level: info

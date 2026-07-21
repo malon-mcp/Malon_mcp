@@ -4,7 +4,7 @@ import path from 'node:path';
 import { getSessionStats } from '../governor/token-accounting.js';
 import { checkRot } from '../governor/rot.js';
 import { logger } from '../util/log.js';
-import { getSearchConfig } from '../util/config.js';
+import { getSearchConfig, getActivePricing } from '../util/config.js';
 import type { StatusResult } from '../types.js';
 
 const startTime = Date.now();
@@ -42,6 +42,8 @@ export async function statusCommand(repoRoot?: string): Promise<StatusResult> {
   const searchCfg = getSearchConfig();
   const isLocal = searchCfg.provider === 'ollama';
 
+  const activePricing = getActivePricing();
+
   const result: StatusResult = {
     session_id: currentSessionId,
     spend_usd: stats.spend_usd,
@@ -52,6 +54,14 @@ export async function statusCommand(repoRoot?: string): Promise<StatusResult> {
     uptime_ms: Date.now() - startTime,
     local_mode: isLocal,
     local_model: isLocal ? searchCfg.model : undefined,
+    active_pricing: activePricing
+      ? {
+          provider: activePricing.provider,
+          model: activePricing.model,
+          input_per_million: activePricing.pricing.input_per_million,
+          output_per_million: activePricing.pricing.output_per_million,
+        }
+      : undefined,
   };
 
   logger.debug({ ...result }, 'status');

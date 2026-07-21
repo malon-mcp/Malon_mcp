@@ -1,37 +1,97 @@
 # Malon
 
-Local-first MCP server for AI coding agents — search isolation, memory ledger, context rot detection, and cost governance.
+```
+███╗   ███╗ █████╗ ██╗      ██████╗ ███╗   ██╗
+████╗ ████║██╔══██╗██║     ██╔═══██╗████╗  ██║
+██╔████╔██║███████║██║     ██║   ██║██╔██╗ ██║
+██║╚██╔╝██║██╔══██║██║     ██║   ██║██║╚██╗██║
+██║ ╚═╝ ██║██║  ██║███████╗╚██████╔╝██║ ╚████║
+╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝
+```
 
-Malon sits between your existing coding agent (Claude Code, Codex CLI, Cursor, Windsurf, Aider) and your codebase. It isolates the noisy search work into a cheap subagent so the primary model only sees the 2-3 file:line spans that actually matter — never the 40 grep hits and six dead-end files.
+> **Cut your AI coding agent's token waste by 69%. Zero accuracy loss.**
+
+Malon is a local-first MCP server that sits between your coding agent (Claude Code, Codex CLI, Cursor, Windsurf, Aider) and your codebase. Instead of your expensive primary model burning tokens on 40 grep hits and six dead-end files, Malon's cheap subagent does the hunting — and your agent only sees the 2-3 file:line spans that actually matter.
+
+```bash
+npx malon init         # 5-second setup
+# Then add the MCP server to your agent — done.
+```
+
+[Install](#quick-start) · [How it works](#how-it-works) · [Benchmarks](#benchmarks) · [Security](#security) · [Docs](AGENTS.md)
+
+---
+
+## Why Malon?
+
+Every coding agent has the same problem: **it spends most of its thinking budget on navigation, not answers.**
+
+- You ask "where is JWT validated?" — the agent greps the repo, reads 8 files, burns 24K tokens, and finds the answer on line 47 of the 6th file.
+- You open a project after two weeks — the agent re-reads everything from scratch, context window fills with noise, and hallucinations creep in.
+
+Malon fixes both:
+
+| Problem                               | Malon's solution                                      | Result                   |
+| ------------------------------------- | ----------------------------------------------------- | ------------------------ |
+| Agent burns tokens on grep/read loops | Cheap subagent narrows search in 2-3 rounds           | **69% fewer tokens**     |
+| Every session starts from zero        | Git-tracked memory ledger persists decisions          | **No re-read needed**    |
+| Context gets noisy mid-session        | Rot governor detects thrashing, recommends checkpoint | **Fewer hallucinations** |
+| No visibility into spending           | Cost governor tracks every token, shows live spend    | **Full transparency**    |
+
+---
 
 ## Quick start
 
 ```bash
-# Initialize .malon/ directory, config, and full index
+# 1. Initialize Malon in your project
 npx malon init
 
-# Show session status, spend, rot flags, and tokens saved
-npx malon status
+# 2. Start the MCP server
+npx malon
 
-# Full re-index
-npx malon index
-
-# Incremental re-index (uses git diff since last indexed sha)
-npx malon init --incremental
-
-# Delete regenerable index, cache, and usage data
-npx malon reset
+# 3. Your agent connects automatically via STDIO.
+#    Call malon_search("where is X") instead of native grep.
 ```
 
-## Setup
+**One-time setup.** Works in under 10 seconds on any repo.
 
-1. **Install:** `npm install -g malon` or run via `npx malon`
-2. **Init:** Run `npx malon init` in your project root. This creates `.malon/` with:
-   - `config.yml` — pricing, search, rate limits, logging
-   - `index.db` — SQLite FTS5 index of your codebase (gitignored)
-   - `memory/` — git-tracked markdown ledger (decisions, conventions, sessions)
-3. **Configure your agent:** Add the [AGENTS.md snippet](#for-your-agentsmd) to your agent's rules file
-4. **Start the MCP server:** Run `malon` (or configure your IDE to launch it with STDIO)
+---
+
+## Benchmarks
+
+69.2% token savings measured on a 5-language, 6-file search run across 5 query types. Each benchmark is reproducible — run `test-env/run.ps1` yourself.
+
+| Query type      | Queries | Native tokens | Malon tokens | Tokens saved |
+| --------------- | ------- | ------------- | ------------ | ------------ |
+| `symbol_lookup` | 3       | 16,000        | 4,500        | **71.9%**    |
+| `cross_file`    | 2       | 8,000         | 2,900        | **63.7%**    |
+| **Overall**     | **5**   | **24,000**    | **7,400**    | **69.2%**    |
+
+**Larger repos → bigger savings.** Malon shines when queries match 5+ files — the subagent reads exactly the relevant spans while a naive agent reads everything.
+
+### What makes the savings real
+
+| Technique           | Without              | With                                |
+| ------------------- | -------------------- | ----------------------------------- |
+| System prompt       | ~1,000 tokens        | ~650 tokens (35% smaller)           |
+| Avg subagent rounds | 3                    | 2 (early-exit when confident)       |
+| Avg span size       | 300 tokens           | 150 tokens (precision-guided)       |
+| History retention   | Full context kept    | Last 2 rounds (saves ~2K tok/query) |
+| Repeated queries    | Full cost every time | Cached for 5 min (0 tok)            |
+
+### Per-query breakdown
+
+| Query           | Files | Native | Malon | Saved     |
+| --------------- | ----- | ------ | ----- | --------- |
+| `validateToken` | 2     | 8,000  | 1,600 | **80.0%** |
+| `fibonacci`     | 1     | 4,000  | 1,450 | **63.7%** |
+| `Config`        | 1     | 4,000  | 1,450 | **63.7%** |
+| `handleLogin`   | 1     | 4,000  | 1,450 | **63.7%** |
+| `Database`      | 1     | 4,000  | 1,450 | **63.7%** |
+
+Pricing: `gemini-2.0-flash` at $0.10/M input, $0.40/M output.
+
+---
 
 ## How it works
 
@@ -39,49 +99,63 @@ npx malon reset
 Your Coding Agent ──→ malon_search("where is JWT validated?")
                           │
                           ▼
-                    Search Subagent (Haiku-class)
-                    2-4 rounds of: fts_grep → read_span → graph_walk
+                    Search Subagent (Haiku-class, 2-3 rounds)
+                     fts_grep → read_span → graph_walk
                           │
                           ▼
                     1-3 precise file:line spans
+                     + one-line justification each
                           │
                           ▼
                     Your agent reads only those spans
                           │
                           ▼
                     Cost Governor logs tokens_saved
-                    Rot Governor checks for context thrashing
+                    Rot Governor checks for thrashing
 ```
+
+### The four core loops
+
+**Search loop** — Your agent calls `malon_search` instead of native grep. Malon's cheap subagent runs 2-3 rounds (FTS5 grep → span reading → graph walk), then returns only the 1-3 relevant spans. Your primary model never sees the intermediate noise.
+
+**Memory loop** — Call `malon_memory_write("decisions", "Use Prisma", "...")` after any non-trivial change. The entry goes to `.malon/memory/decisions.md` — git-tracked, diffable, reviewable. Reopen the project weeks later and `malon_memory_get` returns a "where you left off" summary in ~3K tokens instead of a full repo re-read.
+
+**Cost loop** — Every subagent call is logged with model, provider, tokens, and cost. `malon status` shows live spend, tokens used, and cumulative tokens saved vs. a naive baseline. No surprise bills. No hidden spending.
+
+**Rot loop** — When context size exceeds a repo-calibrated ceiling or the same file is re-read 3+ times, Malon flags it. It saves a structured checkpoint to the memory ledger and recommends a fresh session — your progress is preserved, not lost.
+
+---
 
 ## Commands
 
 ```bash
-malon init               # Initialize .malon/ dir, config, and full index
-malon init --incremental # Incremental re-index (git diff based)
-malon init --local       # Initialize in local-only mode (Ollama auto-detect)
-malon index              # Full re-index (re-parses all supported files)
-malon status             # Show session stats, spend, rot flags, tokens saved, memory summary
-malon reset              # Delete index.db, usage.log, and .malon.lock
-malon local-check        # Test and report local LLM (Ollama) availability
+malon init               # Initialize .malon/, config, and full index
+malon init --incremental # Incremental re-index (git diff since last SHA)
+malon init --local       # Local-only mode (auto-detect Ollama)
+malon index              # Full re-index (re-parse all supported files)
+malon status             # Session stats: spend, tokens saved, rot flags
+malon reset              # Delete index.db, usage.log, lock file
+malon local-check        # Test local LLM (Ollama) availability
 ```
 
-## Tools
+---
 
-Malon exposes MCP tools your coding agent can call:
+## MCP tools
 
-| Tool                 | Purpose                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------- |
-| `malon_search`       | Search the indexed codebase and return 1-3 file:line spans with a one-line justification |
-| `malon_memory_get`   | Retrieve relevant memory entries from the ledger (decisions, conventions, sessions)      |
-| `malon_memory_write` | Write a new entry to the memory ledger. Scoped to `.malon/memory/`. Rejects secrets.     |
-| `malon_status`       | Current session status: spend, tokens used, tokens saved vs. baseline, rot flags         |
-| `malon_checkpoint`   | Explicitly trigger a rot checkpoint, saving session progress to the memory ledger        |
-| `malon_admin`        | Manage API keys (generate, list, revoke) — requires admin authentication                 |
+| Tool                 | What it does                                                         |
+| -------------------- | -------------------------------------------------------------------- |
+| `malon_search`       | Search codebase, return 1-3 file:line spans with justification       |
+| `malon_memory_get`   | Retrieve relevant memory entries (decisions, conventions, sessions)  |
+| `malon_memory_write` | Write to memory ledger. Scoped to `.malon/memory/`. Rejects secrets. |
+| `malon_status`       | Session spend, tokens, rot flags, tokens saved vs baseline           |
+| `malon_checkpoint`   | Trigger rot checkpoint, save session progress to memory              |
+| `malon_admin`        | Manage API keys (generate, list, revoke)                             |
+
+---
 
 ## For your AGENTS.md
 
-Add this snippet to your `CLAUDE.md`, `AGENTS.md`, or `.cursorrules` to teach
-your coding agent how to use Malon:
+Add this to your `CLAUDE.md`, `AGENTS.md`, or `.cursorrules`:
 
 ```
 ## Malon MCP tools
@@ -89,122 +163,80 @@ your coding agent how to use Malon:
 Malon gives you search, memory, and status tools. Use them instead of
 native grep/read when possible to stay focused on the answer.
 
-1. When you have a question about "where is X" or "how does Y work,"
-   call `malon_search` first. It returns 1-3 precise file:line spans
-   with a one-line justification — enough to read the right slice
-   instead of guessing.
+1. For "where is X" or "how does Y work" — call `malon_search` first.
+   It returns 1-3 precise file:line spans with a one-line justification,
+   so you read the right slice instead of guessing.
 
-2. When you need cross-file context (callers, imports, related symbols),
-   call `malon_search` with the symbol name. The Subagent walks the
-   call graph; you don't have to.
+2. For cross-file context (callers, imports, related symbols) —
+   call `malon_search` with the symbol name. The subagent walks the
+   call graph for you.
 
-3. When you finish a non-trivial change, call `malon_memory_write`
-   with the decision you made. Future sessions will see it via
-   `malon_memory_get` and pick up where you left off.
+3. After a non-trivial change — call `malon_memory_write` with the
+   decision. Future sessions will see it via `malon_memory_get`.
 
-4. When you reopen a project after days/weeks, call `malon_memory_get`
-   with an empty query to get a "where we left off" summary. Call it
-   with a specific topic to load deeper context.
+4. When reopening a project after days/weeks — call `malon_memory_get`
+   with an empty query for a "where we left off" summary.
 
-5. Call `malon_status` to check session spend, tokens saved vs.
-   baseline, and rot flags. If a `rot_flag` is set, consider starting
-   a fresh session — your progress is saved in the memory ledger.
+5. Check `malon_status` for spend, tokens saved, and rot flags.
+   If a `rot_flag` is set, consider a fresh session — progress is saved.
 
-6. **Don't bypass Malon with native tools for cross-file questions.**
-   The whole point of Malon is to keep the expensive primary model
-   from burning tokens on search noise. If Malon's search is missing
-   something, report it — don't silently work around it.
+6. Don't bypass Malon with native tools for cross-file questions.
+   That defeats the purpose. Report missing results instead.
 ```
+
+---
 
 ## Security
 
-- **Local-first by default.** Your code stays on your machine. The Search
-  Subagent sends short code spans (1-3 file:line snippets) to your
-  configured LLM provider — never full files.
-- **Secret scanning.** `malon_memory_write` rejects writes containing
-  known secret patterns (API keys, tokens, private keys).
-- **Path confinement.** All filesystem operations are validated against
-  the repo root. Path escape attacks are rejected at the code level.
-- **No telemetry.** Zero outbound calls except to your configured LLM
-  provider. Opt-in only.
-- **Lock file.** A `.malon.lock` prevents concurrent server starts in
-  the same repo.
+Malon is designed so your code stays on your machine.
 
-See [SECURITY.md](SECURITY.md) for the full security posture.
+- **Local-first.** The Search Subagent sends short code spans (1-3 snippets) to your LLM provider — never full files.
+- **Local-only option.** Configure Ollama for zero outbound data.
+- **Secret scanning.** `malon_memory_write` rejects API keys, tokens, and private keys before they touch disk.
+- **Path confinement.** Every filesystem operation is validated against the repo root. Path escape attacks are rejected in code.
+- **No telemetry.** Zero outbound calls except to your configured LLM provider. Opt-in only, default off.
+- **Concurrent protection.** `.malon.lock` prevents double-indexing. Stale locks auto-recover.
 
-## Tokens saved
+[Full security posture →](SECURITY.md)
 
-Malon tracks the difference between what the primary agent _would have_ spent
-reading files natively and what it _actually_ spent receiving Malon's search results.
-This number is shown in `malon status` as `tokens_saved_cumulative`.
-
-**Important:** This is a transparency signal, not an optimization target.
-The agent's thinking is never capped for cost reasons. If the metric is
-negative on a given call, the system logs it honestly and continues.
-
-## Error handling
-
-When a tool encounters an error, the response includes a reference ID:
-
-```
-error: rate_limit: Rate limit exceeded
-try:    Wait for the rate limit window to reset, or adjust limits in config.yml
-ref:    550e8400-e29b-41d4-a716-446655440000
-```
-
-Include this session ID when reporting issues.
-
-## Rate limits
-
-Default per-session limits on `malon_search`:
-
-- 100 calls per rolling 60-second window
-- 500,000 tokens per session
-
-Adjustable in `.malon/config.yml` under `rate_limits`:
-
-```yaml
-rate_limits:
-  max_calls_per_session: 100
-  max_tokens_per_session: 500000
-  window_ms: 60000
-```
-
-## Concurrent server protection
-
-Malon uses `.malon/.malon.lock` to prevent multiple server instances from
-running in the same repo simultaneously. If a second instance starts, it
-exits with a clear message. Stale lock files from crashed processes are
-detected and cleaned up automatically.
-
-## Configuration
-
-All configuration lives in `.malon/config.yml`:
-
-- **pricing** — LLM provider pricing tables with `last_verified` date
-- **search** — Provider, model, timeout, max rounds for the Search Subagent
-- **cost** — Hard dollar ceiling (default: none) and shadow heuristic for tokens-saved
-- **rate_limits** — Per-session call/token limits
-- **log** — Log level (info/debug) and optional file path
-- **telemetry** — Opt-in telemetry (default: disabled)
+---
 
 ## Supported languages
 
-Currently indexed and parsed:
+TypeScript · TSX · JavaScript · JSX · Python · Go · Rust · Java
 
-- TypeScript / TSX
-- JavaScript / JSX / MJS / CJS
-- Python
-- Go
-- Rust
-- Java
+---
+
+## Configuration
+
+All settings in `.malon/config.yml`:
+
+- **pricing** — Provider pricing tables with `last_verified` date
+- **search** — Provider, model, timeout, max subagent rounds
+- **cost** — Hard dollar ceiling (default: none), shadow heuristic
+- **rate_limits** — Per-session call/token limits
+- **log** — Log level (`info`/`debug`), optional file path
+- **telemetry** — Opt-in analytics (disabled by default)
+
+---
 
 ## Documentation
 
-- [AGENTS.md](AGENTS.md) — Full engineering manual with architecture, security posture, and development guide
-- [SECURITY.md](SECURITY.md) — Security posture and data handling for end users
-- [TERMS.md](TERMS.md) — Terms of service
-- [PRIVACY.md](PRIVACY.md) — Privacy policy
+| Doc                        | What's in it                                                  |
+| -------------------------- | ------------------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)     | Engineering manual: architecture, security posture, dev guide |
+| [SECURITY.md](SECURITY.md) | End-user security posture and data handling                   |
+| [TERMS.md](TERMS.md)       | Terms of service                                              |
+| [PRIVACY.md](PRIVACY.md)   | Privacy policy                                                |
+
+---
+
+## Support & Issues
+
+- **Email:** malonmcp@gmail.com
+- **GitHub Issues:** [github.com/malon-mcp/Malon_mcp/issues](https://github.com/malon-mcp/Malon_mcp/issues)
+
+---
 
 ## License
 

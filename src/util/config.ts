@@ -4,7 +4,7 @@ import { logger } from './log.js';
 import { setRateLimitConfig } from '../governor/rate-limiter.js';
 import { setRetentionConfig } from '../governor/retention.js';
 import { validatePricingAge } from '../governor/pricing.js';
-import type { PricingEntry } from '../governor/pricing.js';
+import type { PricingEntry } from '../types.js';
 
 export interface RateLimitConfig {
   max_calls_per_session?: number;
@@ -34,12 +34,39 @@ export interface NestedConfig {
     last_verified?: string;
     providers?: Record<string, Record<string, PricingEntry>>;
   };
+  cost?: Record<string, unknown>;
 }
 
 let cachedSearchConfig: SearchConfig | null = null;
+let cachedPricing: {
+  last_verified: string;
+  providers: Record<string, Record<string, PricingEntry>>;
+} | null = null;
 
 export function getSearchConfig(): SearchConfig {
   return cachedSearchConfig ?? {};
+}
+
+export function getPricingConfig(): {
+  last_verified: string;
+  providers: Record<string, Record<string, PricingEntry>>;
+} | null {
+  return cachedPricing;
+}
+
+export function getActivePricing(): {
+  provider: string;
+  model: string;
+  pricing: PricingEntry;
+} | null {
+  if (!cachedPricing) return null;
+  const search = cachedSearchConfig;
+  if (!search?.provider || !search?.model) return null;
+  const providerConfig = cachedPricing.providers[search.provider];
+  if (!providerConfig) return null;
+  const modelPricing = providerConfig[search.model];
+  if (!modelPricing) return null;
+  return { provider: search.provider, model: search.model, pricing: modelPricing };
 }
 
 export async function applyConfig(repoRoot: string): Promise<void> {
@@ -89,10 +116,21 @@ export async function applyConfig(repoRoot: string): Promise<void> {
 
     const pricing = config['pricing'];
     if (pricing?.last_verified) {
+      const providers = pricing.providers ?? {};
       validatePricingAge({
         last_verified: pricing.last_verified,
-        providers: pricing.providers ?? {},
+        providers,
       });
+      cachedPricing = {
+        last_verified: pricing.last_verified,
+        providers,
+      };
+      logger.debug({ last_verified: pricing.last_verified }, 'pricing_config_loaded');
+    }
+
+    const cost = config['cost'];
+    if (cost) {
+      logger.debug({ cost }, 'cost_config_loaded');
     }
   } catch (err) {
     if (err instanceof Error && err.name === 'ConfigError') {

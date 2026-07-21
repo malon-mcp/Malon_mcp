@@ -28,11 +28,25 @@ Plan.md
 # .agents/ — Anthropic skills (third-party, regenerable via npx skills add)
 .agents/
 
+# .recon/ — codebase analysis metadata (SHA hashes flagged by gitleaks as false positives)
+.recon/
+
 # .opencode/ — opencode tool config + skills (machine-specific)
 .opencode/
 
 # .claude/ — local tool config (machine-specific)
 .claude/
+
+# Test environment — generated artifacts, timings, reports, temp fixtures
+test-env/work/
+test-env/work-*/
+test-env/_*.tmp
+test-env/_tmp_*/
+test-env/_*.mjs
+test-env/report.jsonl
+test-env/results.json
+test-env/summary.json
+test-env/*.log
 
 # skill-lock.json — tracked for reproducible installs
 # (not ignored, so it travels with the repo)
